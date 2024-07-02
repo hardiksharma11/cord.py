@@ -1,5 +1,7 @@
 import json
-from packages.utils.src.crypto_utils import check_address
+from datetime import datetime
+import pytz
+from packages.utils.src.crypto_utils import check_address, is_hex
 from packages.utils.src.SDKErrors import Errors
 from ss58_format import ss58_format
 
@@ -62,4 +64,46 @@ def verify_cord_address(input) -> None:
     if not check_address(input, ss58_format):
         raise Errors.AddressInvalidError(input)
     
+def is_cord_address(input) -> bool:
+    """
+    Type guard to check whether input is an SS58 address with our prefix of 29.
 
+    :param input: Address string to validate for correct format.
+    :returns: True if input is a valid CordAddress, False otherwise.
+    """
+    try:
+        verify_cord_address(input)
+        return True
+    except (Errors.AddressTypeError, Errors.AddressInvalidError):
+        return False
+
+
+def verify_is_hex(input, bit_length= None):
+    """
+    Validates the format of a hex string via regex.
+
+    :param input: Hex string to validate for correct format.
+    :param bit_length: Expected length of hex in bits.
+    :raises SDKErrors.HashMalformedError: When the input is not a valid hex string.
+    """
+    if not is_hex(input, bit_length):
+        raise Errors.HashMalformedError(
+            input if isinstance(input, str) else None
+        )
+    
+def convert_unix_time_to_date_time(unix_time: int, time_zone: str) -> str:
+    # Convert the Unix timestamp to a datetime object
+    date = datetime.fromtimestamp(unix_time, pytz.timezone(time_zone))
+    
+    # Format the date according to the specified options
+    formatted_date = date.strftime('%Y-%B-%d %H:%M:%S %Z')
+
+    return formatted_date
+
+
+def convert_date_time_to_unix_time(date_time_str: str) -> int:
+    # Note: The date_time_str format should match the output of convert_unix_time_to_date_time
+    date = datetime.strptime(date_time_str, '%Y-%B-%d %H:%M:%S %Z')
+    unix_time = int(date.timestamp())
+    
+    return unix_time                                                                          
