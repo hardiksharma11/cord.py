@@ -1,4 +1,6 @@
 from packages.utils.src.crypto_utils import blake2_as_u8a, encode_address
+from packages.utils.src.ss58_format import ss58_format
+from packages.utils.src import data_utils
 from packages.utils.src.SDKErrors import Errors
 import re
 
@@ -74,4 +76,47 @@ def validate_uri(input, expect_type=None):
             'Expected a CORD DidResourceUri (containing a #fragment) but got a DidUri'
         )
 
-    DataUtils.verify_cord_address(address)
+    data_utils.verify_cord_address(address)
+
+def get_address_by_key(key) -> str:
+    """
+    Internal: derive the address part of the DID when it is created from the authentication key.
+
+    :param public_key: The public key.
+    :param key_type: The type of the key.
+    :return: The expected address of the DID.
+    """
+    public_key = key['publicKey']
+    key_type = key['type']
+    if key_type in ['ed25519', 'sr25519']:
+        return encode_address(public_key, ss58_format)
+
+    # Otherwise it’s ecdsa.
+    # Taken from https://github.com/polkadot-js/common/blob/master/packages/keyring/src/pair/index.ts#L44
+    address = blake2_as_u8a(public_key) if len(public_key) > 32 else public_key
+    return encode_address(address, ss58_format)
+
+def get_did_uri(did_or_address) -> str:
+    """
+    Builds the URI an account will have after it’s stored on the blockchain.
+
+    :param did_or_address: The URI of the account. Internally it’s used with the DID "address" as well.
+    :return: The expected DID URI.
+    """
+    if data_utils.is_cord_address(did_or_address):
+        address = did_or_address
+    else:
+        address = parse(did_or_address)['address']
+    
+    return f"did:cord:{address}"
+
+
+def get_did_uri_from_key(key) -> str:
+    """
+    Builds the URI of a DID if it is created with the authentication key provided.
+
+    :param key: The key that will be used as DID authentication key.
+    :return: The expected DID URI.
+    """
+    address = get_address_by_key(key)
+    return get_did_uri(address)
