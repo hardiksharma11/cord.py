@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 from packages.utils.src.crypto_utils import check_address, is_hex
 from packages.utils.src.SDKErrors import Errors
-from ss58_format import ss58_format
+from .ss58_format import ss58_format
 
 def flatten_object(obj, prefix=''):
     """
