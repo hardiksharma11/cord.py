@@ -1,4 +1,4 @@
-from substrateinterface import Keypair
+from substrateinterface import Keypair, KeypairType
 from substrateinterface.utils import ss58
 import hashlib
 import base58
@@ -6,6 +6,10 @@ import base58
 #generate mnemonic function
 def generate_mnemonic():
     return Keypair.generate_mnemonic()
+
+def create_from_mnemonic(mnemonic, crypto_type='sr25519'):
+    type = KeypairType.SR25519 if crypto_type == 'sr25519' else KeypairType.ED25519
+    return Keypair.create_from_mnemonic(mnemonic, type)
     
 # Equivalent functions for blake2AsHex, blake2AsU8a
 def blake2_as_hex(data, digest_size=32):
@@ -86,3 +90,16 @@ def u8a_to_u8a(data):
     else:
         raise TypeError("Unsupported input type for conversion to u8a")
 
+def make_keypair_from_uri(uri: str, key_type: str = 'ed25519') -> Keypair:
+    """
+    Generate typed CORD blockchain keypair from a polkadot keypair URI.
+
+    :param uri: The URI (mnemonic or URI) to generate the keypair from.
+    :param key_type: Optional type of the keypair ('ed25519', 'sr25519', 'ecdsa').
+    :return: The keypair.
+    """
+    if key_type not in ['ed25519', 'sr25519', 'ecdsa']:
+        raise ValueError(f"Unsupported key_type: {key_type}")
+    type = KeypairType.ED25519 if key_type == 'ed25519' else KeypairType.SR25519
+    keypair = Keypair.create_from_uri(uri, crypto_type=type)
+    return keypair
