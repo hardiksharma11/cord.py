@@ -10,8 +10,8 @@ Communicates with the chain via WebSockets and can listen to blocks. It exposes 
 from substrateinterface import SubstrateInterface, Keypair
 from substrateinterface.exceptions import SubstrateRequestException
 from packages.config.src.service import ConfigService
-from subscriptionPromise import make_subscription_promise
-from errorHandling.errorHandler import ErrorHandler
+from .subscriptionPromise import make_subscription_promise
+from .errorHandling.errorHandler import ErrorHandler
 from packages.utils.src.SDKErrors import Errors
 import asyncio
 

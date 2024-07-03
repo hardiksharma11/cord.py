@@ -19,7 +19,7 @@ interactions.
 from substrateinterface import SubstrateInterface
 from substrateinterface.exceptions import SubstrateRequestException
 import asyncio
-from service import ConfigService
+from .service import ConfigService
 
 async def init(configs=None):
     """
