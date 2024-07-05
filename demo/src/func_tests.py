@@ -1,6 +1,7 @@
 import asyncio
 import packages.sdk.src as Cord
 from utils.create_account import create_account
+from utils.create_authorities import add_network_member
 
 
 async def main():
@@ -26,6 +27,9 @@ async def main():
     # Get the crypto type as a string
     crypto_type_str = crypto_type_map.get(authority_identity.crypto_type, 'unknown')
     print(f"🏦  Member ({crypto_type_str}): {authority_identity.ss58_address}")
+
+    
+    account_1 = await add_network_member(authority_author_identity, authority_identity.ss58_address)
 
 if __name__ == "__main__":
     asyncio.run(main())
