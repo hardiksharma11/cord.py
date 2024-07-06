@@ -2,6 +2,7 @@ import asyncio
 import packages.sdk.src as Cord
 from utils.create_account import create_account
 from utils.create_authorities import add_network_member
+from utils.create_registrar import set_registrar, set_identity, request_judgement
 
 
 async def main():
@@ -16,12 +17,12 @@ async def main():
     authority_author_identity = Cord.Utils.crypto_utils.make_keypair_from_uri('//Alice','sr25519')
 
     #Setup network authority account 
-    account = create_account()
-    authority_identity = account['account']
+    authority_account = create_account()
+    authority_identity = authority_account['account']
     crypto_type_map = {
-        0: 'ed25519',
-        1: 'sr25519',
-        2: 'ecdsa'
+        1: 'ed25519',
+        2: 'sr25519',
+        3: 'ecdsa'
     }
 
     # Get the crypto type as a string
@@ -29,7 +30,20 @@ async def main():
     print(f"🏦  Member ({crypto_type_str}): {authority_identity.ss58_address}")
 
     
-    account_1 = await add_network_member(authority_author_identity, authority_identity.ss58_address)
+    await add_network_member(authority_author_identity, authority_identity.ss58_address)
+    await set_registrar(authority_author_identity, authority_identity.ss58_address)
+    print('✅ Network Authority created!')
+
+    # Setup network member account.
+    author_account = create_account()
+    author_identity = author_account['account']
+    print(f"🏦  Member ({crypto_type_map.get(author_identity.crypto_type, 'unknown')}): {author_identity.ss58_address}")
+    await add_network_member(authority_author_identity, author_identity.ss58_address)
+    print('🔏  Member permissions updated')
+    await set_identity(author_identity)
+    print('🔏  Member identity info updated')
+    await request_judgement(author_identity, authority_identity.ss58_address)
+    print('🔏  Member identity judgement requested')
 
 if __name__ == "__main__":
     asyncio.run(main())

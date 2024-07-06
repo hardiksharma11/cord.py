@@ -28,18 +28,19 @@ async def failproof_submit(tx, submitter):
 
 async def add_network_member(author_account, authority):
     api = Cord.ConfigService.get('api')
+    
     call_tx = api.compose_call(
         call_module='NetworkMembership',
         call_function='nominate',
-        call_params={'authority': authority, 'immediate': False}
+        call_params={'member': authority, 'expires': False}
     )
 
-    # sudo_tx = api.compose_call(
-    #     call_module='Sudo',
-    #     call_function='sudo',
-    #     call_params={'call': call_tx}
-    # )
+    sudo_tx = api.compose_call(
+        call_module='Sudo',
+        call_function='sudo',
+        call_params={'call': call_tx}
+    )
 
-    # extrinsic = api.create_signed_extrinsic(call=sudo_tx, keypair=author_account)
+    extrinsic = api.create_signed_extrinsic(call=sudo_tx, keypair=author_account)
 
-    # await failproof_submit(extrinsic, author_account)
+    await failproof_submit(extrinsic, author_account)
