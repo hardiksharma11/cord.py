@@ -4,8 +4,8 @@ import hashlib
 import base58
 
 #generate mnemonic function
-def generate_mnemonic():
-    return Keypair.generate_mnemonic()
+def generate_mnemonic(size):
+    return Keypair.generate_mnemonic(words=size)
 
 def create_from_mnemonic(mnemonic, crypto_type='sr25519'):
     type = KeypairType.SR25519 if crypto_type == 'sr25519' else KeypairType.ED25519
