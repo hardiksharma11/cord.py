@@ -70,7 +70,10 @@ async def request_judgement(account,registrar):
     
     api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
 
+
 async def provide_judgement(registrar, account):
     api = Cord.ConfigService.get('api')
-    identity_infos = api.query('Identity', 'IdentityOf', account)
+    identity_infos = api.query('Identity', 'IdentityOf', [account])
+
+    
     

@@ -1,6 +1,9 @@
 import packages.sdk.src as Cord
 import asyncio
 from substrateinterface.exceptions import SubstrateRequestException
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def failproof_submit(tx, submitter):
@@ -12,9 +15,9 @@ async def failproof_submit(tx, submitter):
             raise SubstrateRequestException("Transaction failed")
     except SubstrateRequestException as e:
         waiting_time = 6  # 6 seconds
-        print(f"First submission failed. Waiting {waiting_time * 1000} ms before retrying. Exception: {e}")
+        logger.info(f"First submission failed. Waiting {waiting_time * 1000} ms before retrying. Exception: {e}")
         await asyncio.sleep(waiting_time)
-        print("Retrying...")
+        logger.info("Retrying...")
 
         nonce = api.get_account_nonce(submitter.ss58_address)
         signed_tx = api.create_signed_extrinsic(call=tx.call, keypair=submitter, nonce=nonce)
@@ -24,7 +27,7 @@ async def failproof_submit(tx, submitter):
             if not receipt.is_success:
                 raise SubstrateRequestException("Transaction failed")
         except SubstrateRequestException as e:
-            print(f"Second submission failed: {e}")
+            logger.info(f"Second submission failed: {e}")
 
 async def add_network_member(author_account, authority):
     api = Cord.ConfigService.get('api')
