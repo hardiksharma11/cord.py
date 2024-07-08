@@ -14,6 +14,9 @@ from .subscriptionPromise import make_subscription_promise
 from .errorHandling.errorHandler import ErrorHandler
 from packages.utils.src.SDKErrors import Errors
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 TxOutdated = 'Transaction is outdated'
 TxPriority = 'Priority is too low:'
@@ -49,7 +52,7 @@ def convert_weight(weight):
 
 async def get_max_batchable(tx):
     api = ConfigService.get('api')
-    print(api)
+    logger.info(api)
     
     weight_info = await api.rpc.transaction_weightApi.query_weight_info(tx)
     extrinsic_ref_time = convert_weight(weight_info['weight'])
@@ -130,7 +133,7 @@ async def main():
     )
     
     result = await sign_and_submit_tx(tx, keypair)
-    print(f"Transaction status: {result}")
+    logger.info(f"Transaction status: {result}")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -20,6 +20,9 @@ from substrateinterface import SubstrateInterface
 from substrateinterface.exceptions import SubstrateRequestException
 import asyncio
 from .service import ConfigService
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def init(configs=None):
     """
@@ -46,11 +49,11 @@ async def connect(blockchain_rpc_ws_url, no_init_warn=True, **api_options):
             url=blockchain_rpc_ws_url,
             **api_options
         )
-
+        
         await init({'api': substrate})
         return substrate
     except SubstrateRequestException as e:
-        print(f"Error connecting to blockchain: {e}")
+        logger.info(f"Error connecting to blockchain: {e}")
         raise e
 
 async def disconnect():
@@ -71,12 +74,12 @@ async def disconnect():
 async def main():
     blockchain_rpc_ws_url = "ws://127.0.0.1:9944"
     substrate = await connect(blockchain_rpc_ws_url)
-    print("Connected to blockchain:", substrate)
+    logger.info("Connected to blockchain:", substrate)
 
     # Perform any required operations here
 
     disconnected = await disconnect()
-    print("Disconnected:", disconnected)
+    logger.info("Disconnected:", disconnected)
 
 if __name__ == "__main__":
     asyncio.run(main())
