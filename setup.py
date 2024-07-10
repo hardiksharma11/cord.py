@@ -6,6 +6,9 @@ setup(
     packages=find_packages(),
     install_requires=[
         'substrate-interface',
-        'base58'
+        'base58',
+        'bip39',
+        'mnemonic',
+        'pynacl'
     ],
 )

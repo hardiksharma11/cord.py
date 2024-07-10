@@ -2,13 +2,16 @@ from substrateinterface import Keypair, KeypairType
 from substrateinterface.utils import ss58
 import hashlib
 import base58
+import nacl.utils
+from nacl.public import PrivateKey
 
 #generate mnemonic function
-def generate_mnemonic(size):
+def generate_mnemonic(size=24):
     return Keypair.generate_mnemonic(words=size)
 
+
 def create_from_mnemonic(mnemonic, crypto_type='sr25519'):
-    type = KeypairType.SR25519 if crypto_type == 'sr25519' else KeypairType.ED25519
+    type = KeypairType.SR25519 if crypto_type == 'sr25519' else KeypairType.ED25519 if crypto_type == 'ed25519' else KeypairType.ECDSA
     return Keypair.create_from_mnemonic(mnemonic, type)
     
 # Equivalent functions for blake2AsHex, blake2AsU8a
@@ -103,3 +106,21 @@ def make_keypair_from_uri(uri: str, key_type: str = 'ed25519') -> Keypair:
     type = KeypairType.ED25519 if key_type == 'ed25519' else KeypairType.SR25519
     keypair = Keypair.create_from_uri(uri, crypto_type=type)
     return keypair
+
+def nacl_box_pair_from_secret(secret):
+    private_key = PrivateKey(secret)
+    public_key = private_key.public_key
+
+    return {
+        'public_key': bytes(public_key),
+        'secret_key': bytes(private_key)
+    }
+
+def make_encryption_keypair_from_seed(seed = None):
+    if seed is None:
+        seed = nacl.utils.random(32)
+    keypair = nacl_box_pair_from_secret(seed)
+    return {
+        **keypair,
+        'type': 'x25519'
+    }
