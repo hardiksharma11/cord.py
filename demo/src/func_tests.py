@@ -23,9 +23,9 @@ async def main():
     authority_account = create_account()
     authority_identity = authority_account['account']
     crypto_type_map = {
-        1: 'ed25519',
-        2: 'sr25519',
-        3: 'ecdsa'
+        0: 'ed25519',
+        1: 'sr25519',
+        2: 'ecdsa'
     }
 
     # Get the crypto type as a string
@@ -49,6 +49,10 @@ async def main():
     await provide_judgement(authority_author_identity, author_identity.ss58_address)
     logger.info('🔏  Member identity judgement provided')
     logger.info('✅ Network Member added!')
+
+    # Step 2: Setup Identities
+    logger.info('❄️  Demo Identities (KeyRing)')
+
 
 if __name__ == "__main__":
     asyncio.run(main())

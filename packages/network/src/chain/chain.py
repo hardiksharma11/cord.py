@@ -114,27 +114,3 @@ async def sign_and_submit_tx(tx, signer, opts=None):
     signed_tx = tx.sign(signer, nonce=nonce)
     return await submit_signed_tx(signed_tx, opts)
 
-
-'''
-# Example usage
-async def main():
-    blockchain_rpc_ws_url = "ws://127.0.0.1:9944"
-
-    api = await ConfigService.get('api')
-    
-    keypair = Keypair.create_from_uri('//Alice')
-    tx = api.compose_call(
-        call_module='Balances',
-        call_function='transfer',
-        call_params={
-            'dest': '5FHneW46xGXgs5mUiveU4sbTyGBzmstxDsZnpuARwyZ5o7Dg',
-            'value': 1000000000000
-        }
-    )
-    
-    result = await sign_and_submit_tx(tx, keypair)
-    logger.info(f"Transaction status: {result}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-'''
