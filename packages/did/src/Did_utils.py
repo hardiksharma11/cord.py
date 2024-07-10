@@ -92,7 +92,6 @@ def get_address_by_key(key) -> str:
         return encode_address(public_key, ss58_format)
 
     # Otherwise it’s ecdsa.
-    # Taken from https://github.com/polkadot-js/common/blob/master/packages/keyring/src/pair/index.ts#L44
     address = blake2_as_u8a(public_key) if len(public_key) > 32 else public_key
     return encode_address(address, ss58_format)
 

@@ -1,2 +1,4 @@
 **/__pycache__/
 cord.py.egg-info/
+build/
+dist/
