@@ -7,7 +7,6 @@ setup(
     install_requires=[
         'substrate-interface',
         'base58',
-        'bip39',
         'mnemonic',
         'pynacl'
     ],

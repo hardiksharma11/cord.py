@@ -1,4 +1,4 @@
-from Did_utils import get_did_uri
+from .Did_utils import get_did_uri
 from packages.utils.src.crypto_utils import encode_address, base58_encode
 
 

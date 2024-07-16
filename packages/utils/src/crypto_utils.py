@@ -122,5 +122,5 @@ def make_encryption_keypair_from_seed(seed = None):
     keypair = nacl_box_pair_from_secret(seed)
     return {
         **keypair,
-        'type': 'x25519'
+        'crypto_type': 'X25519'
     }

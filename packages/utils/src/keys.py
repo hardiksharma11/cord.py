@@ -11,18 +11,17 @@ from mnemonic import Mnemonic
 def generate_key_agreement(mnemonic: str, key_type: str):
     # Convert mnemonic to seed
     mnemo = Mnemonic("english")
-    seed = mnemo.to_seed(mnemonic)
+    seed = mnemo.to_seed(mnemonic)[:32]
 
     # Create the initial keypair from seed
     if key_type == "sr25519":
         secret_keypair = Keypair.create_from_seed(seed, crypto_type=KeypairType.SR25519)
     else:
         secret_keypair = Keypair.create_from_seed(seed, crypto_type=KeypairType.ED25519)
-
+    
     # Derive the keypair using the path
-    derived_keypair = Keypair.create_from_uri(
+    derived_keypair = secret_keypair.create_from_uri(
         "//did//keyAgreement//0",
-        seed_hex=secret_keypair.seed_hex,
         crypto_type=(
             KeypairType.SR25519 if key_type == "sr25519" else KeypairType.ED25519
         ),
@@ -39,15 +38,15 @@ def generate_key_agreement(mnemonic: str, key_type: str):
 def generate_keypairs(mnemonic, key_type="ed25519"):
     if not mnemonic:
         mnemonic = generate_mnemonic()
-
+    
     authentication = make_keypair_from_uri(
-        f"{mnemonic}//did//authentication//0", crypto_type=key_type
+        f"{mnemonic}//did//authentication//0", key_type=key_type
     )
     assertion_method = make_keypair_from_uri(
-        f"{mnemonic}//did//assertion//0", crypto_type=key_type
+        f"{mnemonic}//did//assertion//0", key_type=key_type
     )
     capability_delegation = make_keypair_from_uri(
-        f"{mnemonic}//did//delegation//0", crypto_type=key_type
+        f"{mnemonic}//did//delegation//0", key_type=key_type
     )
     key_agreement = generate_key_agreement(mnemonic, key_type)
 
