@@ -50,10 +50,9 @@ async def connect(blockchain_rpc_ws_url, no_init_warn=True, **api_options):
         substrate = SubstrateInterface(
             url=blockchain_rpc_ws_url,
             **api_options,
-            type_registry=custom_type
+            
         )
-        a = substrate.get_type_definition('pallet_did::did_details::DidCreationDetails<sp_core::crypto::AccountId32, sp_core::crypto::AccountId32, cord_runtime::MaxNewKeyAgreementKeys, pallet_did::service_endpoints::DidEndpoint<T>>')
-        print(a)
+        
         await init({'api': substrate})
         return substrate
     except SubstrateRequestException as e:
