@@ -103,7 +103,7 @@ def validate_service(endpoint):
             )
 
 def service_to_chain(service):
-    validate_service(service)
+    #validate_service(service)
     return  {
         'id':resource_id_to_chain(service['id']),
         'service_types':[service['type']],
@@ -121,12 +121,12 @@ def public_key_to_chain(key):
         dict: Data restructured to allow SCALE encoding by polkadot api.
     """
 
-    return {key['crypto_type']: key['public_key']}
+    return [{key['crypto_type']: '0x' + key['public_key'].hex()}]
 
 def public_key_to_chain_for_keypair(key):
     
     crypto_type_str = crypto_type_map.get(key.crypto_type, 'unknown')
-    return {crypto_type_str: key.public_key}
+    return {crypto_type_str: '0x' + key.public_key.hex()}
 
 async def get_store_tx(input, submitter, sign_callback):
     
@@ -168,22 +168,37 @@ async def get_store_tx(input, submitter, sign_callback):
         'submitter': submitter,
         'new_assertion_key': new_assertion_key,
         'new_delegation_key': new_delegation_key,
-        'new_key_agreement_keys': [new_key_agreement_keys],
+        'new_key_agreement_keys': new_key_agreement_keys,
         'new_service_details': new_service_details,
     }
-    print(api_input)
-    TYPE_STRING = 'pallet_did::did_details::DidCreationDetails<sp_core::crypto::AccountId32, sp_core::crypto::AccountId32, cord_runtime::MaxNewKeyAgreementKeys, pallet_did::service_endpoints::DidEndpoint<T>>'
-    encoded = api.encode_scale(type_string=TYPE_STRING,value=api_input)
+    api_input_2 = {
+        'did': did,
+        'submitter': submitter,
+        'new_assertion_key': new_assertion_key,
+        'new_delegation_key': new_delegation_key,
+        'new_key_agreement_keys': [
+            [{'X25519': '0x'+key_agreement[0]['public_key'].hex()}],
+        ],
+        'new_service_details': [
+            {
+                    'id': '#my-service',
+                    'service_types': [['service-type']],
+                    'urls': [['https://www.example.com']]
+                    },
+        ],
+    }
     
-    signature = sign_callback(bytes(encoded.get_remaining_bytes()))
-    crypto_type_str = crypto_type_map.get(signature['key_type'], 'unknown')
-    encoded_signature = {crypto_type_str: signature['signature']}
+    print(api_input)
+    encoded = api.encode_scale(type_string='scale_info::217',value=api_input)
+    
+    signature = sign_callback(encoded)
+    encoded_signature = {signature['key_type']: signature['signature']}
 
     extrinsic = api.compose_call(
         call_module='Did',
         call_function='create',
         call_params={
-            'details': encoded.get_remaining_bytes(),
+            'details': encoded,
             'signature': encoded_signature
         }
     )
@@ -207,8 +222,8 @@ async def create_did(submitter_account, the_mnemonic = None, did_service_endpoin
     if did_service_endpoint is None:
         did_service_endpoint = [{
             'id': '#my-service',
-            'type': ['service-type'.encode()],
-            'service_endpoint': ['https://www.example.com'.encode()]
+            'type': ['service-type'],
+            'service_endpoint': ['https://www.example.com']
         }]
 
     # Get transaction for creating the DID
