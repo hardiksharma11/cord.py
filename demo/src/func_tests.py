@@ -39,16 +39,16 @@ async def main():
     # Setup network member account.
     author_account = create_account()
     author_identity = author_account['account']
-    # logger.info(f"🏦  Member ({crypto_type_map.get(author_identity.crypto_type, 'unknown')}): {author_identity.ss58_address}")
-    # await add_network_member(authority_author_identity, author_identity.ss58_address)
-    # logger.info('🔏  Member permissions updated')
-    # await set_identity(author_identity)
-    # logger.info('🔏  Member identity info updated')
-    # await request_judgement(author_identity, authority_identity.ss58_address)
-    # logger.info('🔏  Member identity judgement requested')
-    # await provide_judgement(authority_author_identity, author_identity.ss58_address)
-    # logger.info('🔏  Member identity judgement provided')
-    # logger.info('✅ Network Member added!')
+    logger.info(f"🏦  Member ({crypto_type_map.get(author_identity.crypto_type, 'unknown')}): {author_identity.ss58_address}")
+    await add_network_member(authority_author_identity, author_identity.ss58_address)
+    logger.info('🔏  Member permissions updated')
+    await set_identity(author_identity)
+    logger.info('🔏  Member identity info updated')
+    await request_judgement(author_identity, authority_identity.ss58_address)
+    logger.info('🔏  Member identity judgement requested')
+    await provide_judgement(authority_author_identity, author_identity.ss58_address)
+    logger.info('🔏  Member identity judgement provided')
+    logger.info('✅ Network Member added!')
 
     # Step 2: Setup Identities
     logger.info('❄️  Demo Identities (KeyRing)')
