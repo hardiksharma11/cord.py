@@ -10,7 +10,7 @@ DID_LATEST_VERSION = 1
 # Matches the following DIDs
 # - did:cord:<cord_address>
 # - did:cord:<cord_address>#<fragment>
-CORD_DID_REGEX = (r'^did:cord:(?<address>3[1-9a-km-zA-HJ-NP-Z]{47})(?<fragment>#[^#\n]+)?$')
+CORD_DID_REGEX = re.compile('^did:cord:(?P<address>3[1-9a-km-zA-HJ-NP-Z]{47})(?P<fragment>#[^#\n]+)?$')
 
 def parse(did_uri: str):
     """

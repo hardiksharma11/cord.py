@@ -180,7 +180,7 @@ async def get_store_tx(input, submitter, sign_callback):
             [{'X25519': '0x'+key_agreement[0]['public_key'].hex()}],
         ],
         'new_service_details': [
-            {
+                    {
                     'id': '#my-service',
                     'service_types': [['service-type']],
                     'urls': [['https://www.example.com']]
@@ -188,17 +188,16 @@ async def get_store_tx(input, submitter, sign_callback):
         ],
     }
     
-    print(api_input)
     encoded = api.encode_scale(type_string='scale_info::217',value=api_input)
     
     signature = sign_callback(encoded)
-    encoded_signature = {signature['key_type']: signature['signature']}
+    encoded_signature = {signature['key_type']: '0x' + signature['signature'].hex()}
 
     extrinsic = api.compose_call(
         call_module='Did',
         call_function='create',
         call_params={
-            'details': encoded,
+            'details': api_input,
             'signature': encoded_signature
         }
     )
@@ -249,7 +248,8 @@ async def create_did(submitter_account, the_mnemonic = None, did_service_endpoin
 
     # Retrieve the DID URI and document
     did_uri = get_did_uri_from_key(authentication)
-    encoded_did = api.runtime_call('didApi','query' ,[to_chain(did_uri)])
+    print(did_uri)
+    encoded_did = api.runtime_call('didApi','query' ,to_chain(did_uri))
     document = linked_info_from_chain(encoded_did)
 
     if not document:
