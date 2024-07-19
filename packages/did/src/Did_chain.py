@@ -171,22 +171,6 @@ async def get_store_tx(input, submitter, sign_callback):
         'new_key_agreement_keys': new_key_agreement_keys,
         'new_service_details': new_service_details,
     }
-    api_input_2 = {
-        'did': did,
-        'submitter': submitter,
-        'new_assertion_key': new_assertion_key,
-        'new_delegation_key': new_delegation_key,
-        'new_key_agreement_keys': [
-            [{'X25519': '0x'+key_agreement[0]['public_key'].hex()}],
-        ],
-        'new_service_details': [
-                    {
-                    'id': '#my-service',
-                    'service_types': [['service-type']],
-                    'urls': [['https://www.example.com']]
-                    },
-        ],
-    }
     
     encoded = api.encode_scale(type_string='scale_info::217',value=api_input)
     
@@ -249,6 +233,7 @@ async def create_did(submitter_account, the_mnemonic = None, did_service_endpoin
     # Retrieve the DID URI and document
     did_uri = get_did_uri_from_key(authentication)
     print(did_uri)
+    
     encoded_did = api.runtime_call('didApi','query' ,to_chain(did_uri))
     document = linked_info_from_chain(encoded_did)
 
