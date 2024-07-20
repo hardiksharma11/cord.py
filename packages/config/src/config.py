@@ -48,7 +48,7 @@ async def connect(blockchain_rpc_ws_url, no_init_warn=True, **api_options):
     
     try:
         
-        #custom_type = load_type_registry_file('custom-type.json')
+        custom_type = load_type_registry_file('custom-type.json')
         #example:
         #   {
         #     "runtime_id": 2,
@@ -74,6 +74,7 @@ async def connect(blockchain_rpc_ws_url, no_init_warn=True, **api_options):
         substrate = SubstrateInterface(
             url=blockchain_rpc_ws_url,
             **api_options,
+            type_registry=custom_type
         )
         
         await init({'api': substrate})
