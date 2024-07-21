@@ -3,19 +3,20 @@ from packages.utils.src.crypto_utils import encode_address, base58_encode
 
 
 def from_chain(encoded) -> str:
-    return get_did_uri(encode_address(encoded))
+    return get_did_uri(encoded)
 
 
 def did_public_key_details_from_chain(key_id, key_details):
-    key = (
-        key_details["key"]["asPublicEncryptionKey"]
-        if key_details["key"]["isPublicEncryptionKey"]
-        else key_details["key"]["asPublicVerificationKey"]
-    )
+    if "PublicEncryptionKey" in key_details["key"]:
+        key = key_details["key"]["PublicEncryptionKey"]
+    else:
+        key = key_details["key"]["PublicVerificationKey"]
+
+    type, value = next(iter(key.items()))
     return {
-        "id": f"#{key_id.hex()}",
-        "type": key["type"].lower(),
-        "publicKey": key["value"],
+        "id": key_id,
+        "type": type.lower(),
+        "public_key": value,
     }
 
 
@@ -24,37 +25,37 @@ def resource_id_to_chain(id):
 
 
 def document_from_chain(encoded: dict) -> dict:
-    public_keys = encoded["publicKeys"]
-    authentication_key = encoded["authenticationKey"]
-    assertion_key = encoded["assertionKey"]
-    delegation_key = encoded["delegationKey"]
-    key_agreement_keys = encoded["keyAgreementKeys"]
-    last_tx_counter = encoded["lastTxCounter"]
+    public_keys = encoded["public_keys"]
+    authentication_key = encoded["authentication_key"]
+    assertion_key = encoded["assertion_key"]
+    delegation_key = encoded["delegation_key"]
+    key_agreement_keys = encoded["key_agreement_keys"]
+    last_tx_counter = encoded["last_tx_counter"]
 
     keys = {
         resource_id_to_chain(
             key_id
         ): did_public_key_details_from_chain(key_id, key_details)
-        for key_id, key_details in public_keys.items()
+        for key_id, key_details in public_keys
     }
 
-    authentication = keys[authentication_key.hex()]
+    authentication = keys[authentication_key]
 
     #------
-    did_record = {"authentication": [authentication], "lastTxCounter": last_tx_counter}
+    did_record = {"authentication": [authentication], "last_tx_counter": last_tx_counter}
 
-    if assertion_key['isSome']:
-        key = keys[assertion_key.hex()]
-        did_record["assertionMethod"] = [key]
-    if delegation_key['isSome']:
-        key = keys[delegation_key.hex()]
-        did_record["capabilityDelegation"] = [key]
+    if assertion_key:
+        key = keys[assertion_key]
+        did_record["assertion_method"] = [key]
+    if delegation_key:
+        key = keys[delegation_key]
+        did_record["capability_delegation"] = [key]
 
     key_agreement_key_ids = [
-        key_id.hex() for key_id in key_agreement_keys
+        key_id for key_id in key_agreement_keys
     ]
     if key_agreement_key_ids:
-        did_record["keyAgreement"] = [keys[id] for id in key_agreement_key_ids]
+        did_record["key_agreement"] = [keys[id] for id in key_agreement_key_ids]
 
     return did_record
 
@@ -65,7 +66,7 @@ def service_from_chain(encoded):
     return {
         'id': f'#{id}',
         'type': [url for url in service_types],
-        'serviceEndpoint': [url for url in urls]
+        'service_endpoint': [url for url in urls]
     }
 
 def services_from_chain(encoded):
@@ -84,17 +85,17 @@ def linked_info_from_chain(encoded):
     did = {
         'uri': from_chain(identifier),
         'authentication': did_rec['authentication'],
-        'assertionMethod': did_rec['assertionMethod'],
-        'capabilityDelegation': did_rec['capabilityDelegation'],
-        'keyAgreement': did_rec['keyAgreement'],
+        'assertion_method': did_rec['assertion_method'],
+        'capability_delegation': did_rec['capability_delegation'],
+        'key_agreement': did_rec['key_agreement'],
     }
 
     service = services_from_chain(service_endpoints)
     if service:
         did['service'] = service
 
-    did_name = None if name is None else name.value
-    did_account = account.value
+    did_name = None if name is None else name
+    did_account = account
 
     return {
         'document': did,
