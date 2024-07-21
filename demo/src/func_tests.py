@@ -55,8 +55,26 @@ async def main():
 
     # Creating the DIDs for the different parties involved in the demo.
     # Create Verifier DID
-    did = await Cord.Did.create_did(author_identity)
-    logger.debug(did)
+    verifier = await Cord.Did.create_did(author_identity)
+    verifier_mnemonic = verifier.get('mnemonic')
+    verifier_did = verifier.get('document')
+
+    logger.info(f'🏢  Verifier ({verifier_did["assertion_method"][0]["type"]}): {verifier_did["uri"]}')
+
+    # Create Holder DID
+    holder = await Cord.Did.create_did(author_identity)
+    holder_mnemonic = holder.get('mnemonic')
+    holder_did = holder.get('document')
+
+    logger.info(f'👩‍⚕️  Holder ({holder_did["assertion_method"][0]["type"]}): {holder_did["uri"]}')
+
+    # Create Issuer DID
+    issuer = await Cord.Did.create_did(author_identity)
+    issuer_mnemonic = issuer.get('mnemonic')
+    issuer_did = issuer.get('document')
+    issuer_keys = Cord.Did.generate_keypairs(issuer_mnemonic, "sr25519")
+    print(issuer_keys)
+    logger.info(f'🏦  Issuer ({issuer_did["assertion_method"][0]["type"]}): {issuer_did["uri"]}')
 
 if __name__ == "__main__":
     asyncio.run(main())
