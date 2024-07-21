@@ -232,7 +232,6 @@ async def create_did(submitter_account, the_mnemonic = None, did_service_endpoin
 
     # Retrieve the DID URI and document
     did_uri = get_did_uri_from_key(authentication)
-    print(did_uri)
     
     encoded_did = api.runtime_call('DidApi','query' ,[to_chain(did_uri)])
     document = linked_info_from_chain(encoded_did)

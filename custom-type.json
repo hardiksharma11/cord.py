@@ -34,7 +34,7 @@
                         ],
                         [
                             "details",
-                            "scale_info::368"
+                            "pallet_did::did_details::DidDetails<T>"
                         ]
                     ]
                 }
