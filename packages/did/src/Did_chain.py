@@ -7,6 +7,8 @@ import re
 from urllib.parse import unquote, quote, urlparse
 from packages.utils.src.keys import generate_keypairs
 
+from .did_document_exporter import did_document_exporter
+
 crypto_type_map = {
         0: 'Ed25519',
         1: 'Sr25519',

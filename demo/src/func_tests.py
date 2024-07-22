@@ -4,6 +4,9 @@ from utils.create_account import create_account
 from utils.create_authorities import add_network_member
 from utils.create_registrar import set_registrar, set_identity, request_judgement, provide_judgement
 import logging
+import logging
+from pprint import pformat
+from colorama import Fore, Style, init
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,8 +76,13 @@ async def main():
     issuer_mnemonic = issuer.get('mnemonic')
     issuer_did = issuer.get('document')
     issuer_keys = Cord.Did.generate_keypairs(issuer_mnemonic, "sr25519")
-    print(issuer_keys)
+    
     logger.info(f'🏦  Issuer ({issuer_did["assertion_method"][0]["type"]}): {issuer_did["uri"]}')
+    
+        
+    conforming_did_document = Cord.Did.did_document_exporter.export_to_did_document(issuer_did,'application/json')
+    formatted_obj = pformat(conforming_did_document)
+    logger.info(Fore.GREEN + formatted_obj + Style.RESET_ALL)
 
 if __name__ == "__main__":
     asyncio.run(main())
