@@ -84,5 +84,27 @@ async def main():
     formatted_obj = pformat(conforming_did_document)
     logger.info(Fore.GREEN + formatted_obj + Style.RESET_ALL)
 
+    # Create Delegate One DID
+    delegate_one = await Cord.Did.create_did(author_identity)
+    delegate_one_mnemonic = delegate_one.get('mnemonic')
+    delegate_one_did = delegate_one.get('document')
+
+    logger.info(f'🏛  Delegate ({delegate_one_did["assertion_method"][0]["type"]}): {delegate_one_did["uri"]}')
+
+    # Create Delegate Two DID
+    delegate_two = await Cord.Did.create_did(author_identity)
+    delegate_two_mnemonic = delegate_two.get('mnemonic')
+    delegate_two_did = delegate_two.get('document')
+
+    logger.info(f'🏦  Delegate ({delegate_two_did["assertion_method"][0]["type"]}): {delegate_two_did["uri"]}')
+    # Create Delegate 3 DID
+    delegate_three = await Cord.Did.create_did(author_identity)
+    delegate_three_mnemonic = delegate_three.get('mnemonic')
+    delegate_three_did = delegate_three.get('document')
+
+    logger.info(f'🏦  Delegate ({delegate_three_did["assertion_method"][0]["type"]}): {delegate_three_did["uri"]}')
+
+    logger.info('✅ Identities created!')
+
 if __name__ == "__main__":
     asyncio.run(main())
