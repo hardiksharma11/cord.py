@@ -78,7 +78,9 @@ class HashMalformedError(SDKError):
             message = "Provided hash is invalid or malformed"
         super().__init__(message, options)
 
-
+# Exporter
+class DidExporterError(SDKError):
+    pass
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -91,3 +93,4 @@ class Errors:
     DidError = DidError
     AddressInvalidError = AddressInvalidError
     AddressTypeError = AddressTypeError
+    DidExporterError = DidExporterError
