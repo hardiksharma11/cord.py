@@ -81,8 +81,8 @@ async def main():
     
         
     conforming_did_document = Cord.Did.did_document_exporter.export_to_did_document(issuer_did,'application/json')
-    formatted_obj = pformat(conforming_did_document)
-    logger.info(Fore.GREEN + formatted_obj + Style.RESET_ALL)
+   
+    logger.info(Fore.GREEN + pformat(conforming_did_document) + Style.RESET_ALL)
 
     # # Create Delegate One DID
     # delegate_one = await Cord.Did.create_did(author_identity)
@@ -109,7 +109,11 @@ async def main():
     # Step 3: Create a new Chain Space
     logger.info('\n❄️  Chain Space Creation')
     space_properties = await Cord.Chainspace.build_from_properties(issuer_did['uri'])
-    logger.info(space_properties)
+    logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
+
+    logger.info('\n❄️  Chain Space Properties ')
+    
+
 
 if __name__ == "__main__":
     asyncio.run(main())

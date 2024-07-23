@@ -144,7 +144,7 @@ def encode_identifier(key, iDPrefix):
     assert_condition(key, "Invalid key string passed")
 
     # Decode the key to byte array, allowing re-encoding of an identifier
-    u8a = u8a_to_u8a(key)
+    u8a = u8a_to_u8a('0x' + key)
 
     # Validate the identifier prefix
     assert_condition(
@@ -154,7 +154,7 @@ def encode_identifier(key, iDPrefix):
 
     # Validate the length of the decoded key
     assert_condition(
-        len(u8a) in defaults["allowed_decoded_lengths"],
+        len(list(u8a)) in defaults["allowed_decoded_lengths"],
         f"Expected a valid key to convert, with length {', '.join(map(str, defaults['allowed_decoded_lengths']))}",
     )
 
@@ -274,7 +274,7 @@ def check_identifier(identifier):
     is_valid, _, _, idfr_decoded = check_identifier_checksum(decoded)
 
     if idfr_decoded in VALID_IDENTS:
-        if len(decoded) not in defaults["allowedEncodedLengths"]:
+        if len(decoded) not in defaults["allowed_encoded_lengths"]:
             return False, "Invalid decoded identifier length"
         return is_valid, None if is_valid else "Invalid decoded identifier checksum"
 
