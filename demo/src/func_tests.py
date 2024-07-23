@@ -127,7 +127,7 @@ async def main():
     # logger.info('✅ Identities created!')
 
     # Step 3: Create a new Chain Space
-    logger.info('\n❄️  Chain Space Creation')
+    logger.info('❄️  Chain Space Creation')
     space_properties = await Cord.Chainspace.build_from_properties(issuer_did['uri'])
     logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
     
