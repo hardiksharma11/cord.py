@@ -107,13 +107,18 @@ async def main():
     # logger.info('✅ Identities created!')
 
     # Step 3: Create a new Chain Space
-    logger.info('\n❄️  Chain Space Creation')
+    logger.info('❄️  Chain Space Creation')
     space_properties = await Cord.Chainspace.build_from_properties(issuer_did['uri'])
     logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
 
-    logger.info('\n❄️  Chain Space Properties ')
-    
+    # logger.info('\n❄️  Chain Space Properties ')
+    # TODO: Schema module function dispatch_to_chain
 
+    logger.info('✅ Chain Space created!')
+    logger.info('❄️  Chain Space Approval ')
+
+    await Cord.Chainspace.sudo_approve_chain_space(authority_author_identity, space_properties['uri'], 1000)
+    logger.info('✅ Chain Space approved!')
 
 if __name__ == "__main__":
     asyncio.run(main())
