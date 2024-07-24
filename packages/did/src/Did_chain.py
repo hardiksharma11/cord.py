@@ -243,4 +243,4 @@ async def create_did(submitter_account, the_mnemonic = None, did_service_endpoin
 
     print(document)
 
-    return {'mnemonic': mnemonic, 'document': document['document']}
+    return {'mnemonic': mnemonic, 'document': document['document']} 
