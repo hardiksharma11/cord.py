@@ -131,7 +131,7 @@ async def main():
         author_identity,
         lambda data: {
             "signature": issuer_keys["authentication"].sign(data["data"]),
-            "keyType": issuer_keys["authentication"]["type"],
+            "key_type": issuer_keys["authentication"].crypto_type,
         },
     )
 

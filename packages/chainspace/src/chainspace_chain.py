@@ -119,7 +119,7 @@ async def prepare_create_space_extrinsic(
 
         # Authorize the transaction using the creator's URI and the provided sign callback
         extrinsic = await Did.authorize_tx(
-            creator_uri, tx, sign_callback, author_account.address
+            creator_uri, tx, sign_callback, author_account.ss58_address
         )
 
 
@@ -144,6 +144,7 @@ async def dispatch_to_chain(chain_space, creator_uri, author_account, sign_callb
         )
 
         # Sign and submit the extrinsic transaction with the author account
+        extrinsic = ConfigService.get("api").create_signed_extrinsic(extrinsic, keypair=author_account)
         ConfigService.get("api").submit_extrinsic(extrinsic, wait_for_inclusion=True)
 
         return return_object
