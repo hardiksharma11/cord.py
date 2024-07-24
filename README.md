@@ -11,10 +11,20 @@ To build the SDK and see changes, follow these steps:
    git clone <repository_url>
    cd <repository_directory>
 
-2. Install dependencies and setup modules using setup.py :
+2. Make sure you have python installed. You can download it from [here](https://www.python.org/downloads/). After that install setuptools using:
+     ```bash
+     pip install setuptools
+
+3. Install dependencies and setup modules using setup.py :
 
      ```bash
-     python setup.py
+     python setup.py install
+
+## Required Dependencies
+- substrate-interface
+- base58
+- mnemonic
+- pynacl
 
 ## Experimenting with SDK Methods
 ## Demo Methods
