@@ -263,30 +263,32 @@ async def generate_did_authenticated_tx(params):
     Returns:
         SubmittableExtrinsic: A DID-authorized extrinsic that, after signing with the payment account mentioned in the params, is ready for submission.
     """
+
     api = Cord.ConfigService.get('api')
 
-    signable_call = api.registry.create_type(
-        api.tx.did.submitDidCall.meta.args[0].type.toString(),
-        {
-            'txCounter': params['txCounter'],
-            'did': to_chain(params['did']),
-            'call': params['call'],
-            'submitter': params['submitter'],
-            'blockNumber': params.get('blockNumber') or await api.query.system.number(),
-        }
-    )
+    signable_call = api.encode_scale(type_string = '', value = {
+        'tx_counter': params['tx_counter'],
+        'did': to_chain(params['did']),
+        'call': params['call'],
+        'submitter': params['submitter'],
+        'block_number': params.get('block_number') or await api.query('System','number()'),
+    })
+    
 
     signature = await params['sign']({
-        'data': signable_call.to_u8a(),
-        'keyRelationship': params['keyRelationship'],
+        'data': signable_call.get_next_bytes(),
+        'key_relationship': params['key_relationship'],
         'did': params['did'],
     })
 
     encoded_signature = {
-        signature['keyType']: signature['signature']
+        signature['key_type']: signature['signature']
     }
 
-    return api.tx.did.submitDidCall(signable_call, encoded_signature)
+    return api.compose_call('Did', 'submit_did_call', {
+        "did_call": signable_call,
+        "signature": encoded_signature
+    })
 
 
 #---------FullDidFuntions----------------
