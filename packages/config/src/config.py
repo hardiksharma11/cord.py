@@ -21,6 +21,7 @@ from substrateinterface.exceptions import SubstrateRequestException
 import asyncio
 from .service import ConfigService
 import logging
+from scalecodec.type_registry import load_type_registry_file
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +45,36 @@ async def connect(blockchain_rpc_ws_url, no_init_warn=True, **api_options):
     :param api_options: Additional API connection options.
     :return: A SubstrateInterface instance.
     """
+    
     try:
+        
+        custom_type = load_type_registry_file('custom-type.json')
+        #example:
+        #   {
+        #     "runtime_id": 2,
+        #     "types": {
+        #     "PalletDidDidDetailsDidEncryptionKey": {
+        #         "type": "enum",
+        #         "type_mapping": [
+        #         ["X25519", "[u8; 32]"]
+        #     ]
+        #     },
+        #     "PalletDidServiceEndpointsDidEndpoint": {
+        #         "type": "struct",
+        #         "type_mapping": [
+        #         ["id", "Bytes"],
+        #         ["service_types", "Vec<Bytes>"],
+        #         ["urls", "Vec<Bytes>"]
+        #         ]
+        #     }
+        #     },
+        #     "versioning": []
+        # }
+  
         substrate = SubstrateInterface(
             url=blockchain_rpc_ws_url,
-            **api_options
+            **api_options,
+            type_registry=custom_type
         )
         
         await init({'api': substrate})

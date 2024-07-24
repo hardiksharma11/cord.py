@@ -1,0 +1,44 @@
+{
+    "runtime_api": {
+        "DidApi": {
+            "methods": {
+                "query": {
+                    "params": [
+                        {
+                            "name": "did",
+                            "type": "AccountId"
+                        }
+                    ],
+                    "type": "Option<RawDidLinkedInfo>"
+                }
+            },
+            "types": {
+                "RawDidLinkedInfo": {
+                    "type": "struct",
+                    "type_mapping": [
+                        [
+                            "identifier",
+                            "AccountId"
+                        ],
+                        [
+                            "account",
+                            "AccountId"
+                        ],
+                        [
+                            "name",
+                            "Option<Text>"
+                        ],
+                        [
+                            "service_endpoints",
+                            "Vec<scale_info::219>"
+                        ],
+                        [
+                            "details",
+                            "pallet_did::did_details::DidDetails<T>"
+                        ]
+                    ]
+                }
+            }
+        }
+    }
+}

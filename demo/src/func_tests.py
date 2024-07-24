@@ -4,6 +4,9 @@ from utils.create_account import create_account
 from utils.create_authorities import add_network_member
 from utils.create_registrar import set_registrar, set_identity, request_judgement, provide_judgement
 import logging
+import logging
+from pprint import pformat
+from colorama import Fore, Style, init
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,6 +56,55 @@ async def main():
     # Step 2: Setup Identities
     logger.info('❄️  Demo Identities (KeyRing)')
 
+    # Creating the DIDs for the different parties involved in the demo.
+    # Create Verifier DID
+    verifier = await Cord.Did.create_did(author_identity)
+    verifier_mnemonic = verifier.get('mnemonic')
+    verifier_did = verifier.get('document')
+
+    logger.info(f'🏢  Verifier ({verifier_did["assertion_method"][0]["type"]}): {verifier_did["uri"]}')
+
+    # Create Holder DID
+    holder = await Cord.Did.create_did(author_identity)
+    holder_mnemonic = holder.get('mnemonic')
+    holder_did = holder.get('document')
+
+    logger.info(f'👩‍⚕️  Holder ({holder_did["assertion_method"][0]["type"]}): {holder_did["uri"]}')
+
+    # Create Issuer DID
+    issuer = await Cord.Did.create_did(author_identity)
+    issuer_mnemonic = issuer.get('mnemonic')
+    issuer_did = issuer.get('document')
+    issuer_keys = Cord.Did.generate_keypairs(issuer_mnemonic, "sr25519")
+    
+    logger.info(f'🏦  Issuer ({issuer_did["assertion_method"][0]["type"]}): {issuer_did["uri"]}')
+    
+        
+    conforming_did_document = Cord.Did.did_document_exporter.export_to_did_document(issuer_did,'application/json')
+    formatted_obj = pformat(conforming_did_document)
+    logger.info(Fore.GREEN + formatted_obj + Style.RESET_ALL)
+
+    # Create Delegate One DID
+    delegate_one = await Cord.Did.create_did(author_identity)
+    delegate_one_mnemonic = delegate_one.get('mnemonic')
+    delegate_one_did = delegate_one.get('document')
+
+    logger.info(f'🏛  Delegate ({delegate_one_did["assertion_method"][0]["type"]}): {delegate_one_did["uri"]}')
+
+    # Create Delegate Two DID
+    delegate_two = await Cord.Did.create_did(author_identity)
+    delegate_two_mnemonic = delegate_two.get('mnemonic')
+    delegate_two_did = delegate_two.get('document')
+
+    logger.info(f'🏦  Delegate ({delegate_two_did["assertion_method"][0]["type"]}): {delegate_two_did["uri"]}')
+    # Create Delegate 3 DID
+    delegate_three = await Cord.Did.create_did(author_identity)
+    delegate_three_mnemonic = delegate_three.get('mnemonic')
+    delegate_three_did = delegate_three.get('document')
+
+    logger.info(f'🏦  Delegate ({delegate_three_did["assertion_method"][0]["type"]}): {delegate_three_did["uri"]}')
+
+    logger.info('✅ Identities created!')
 
 if __name__ == "__main__":
     asyncio.run(main())
