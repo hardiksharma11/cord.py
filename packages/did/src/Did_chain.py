@@ -243,4 +243,143 @@ async def create_did(submitter_account, the_mnemonic = None, did_service_endpoin
 
     print(document)
 
-    return {'mnemonic': mnemonic, 'document': document['document']} 
+    return {'mnemonic': mnemonic, 'document': document['document']}
+
+async def generate_did_authenticated_tx(params):
+    """
+    DID-related operations on the CORD blockchain require authorization by a DID. This is realized by requiring that relevant extrinsics are signed with a key featured by a DID as a verification method.
+    Such extrinsics can be produced using this function.
+
+    Args:
+        params (dict): Object wrapping all input to the function.
+        params['did'] (str): Full DID.
+        params['keyRelationship'] (str): DID key relationship to be used for authorization.
+        params['sign'] (function): The callback to interface with the key store managing the private key to be used.
+        params['call'] (Extrinsic): The call or extrinsic to be authorized.
+        params['txCounter'] (BN): The nonce or txCounter value for this extrinsic, which must be larger than the current txCounter value of the authorizing DID.
+        params['submitter'] (CordAddress): Payment account allowed to submit this extrinsic and cover its fees, which will end up owning any deposit associated with newly created records.
+        params['blockNumber'] (int, optional): Block number for determining the validity period of this authorization. If omitted, the current block number will be fetched from chain.
+
+    Returns:
+        SubmittableExtrinsic: A DID-authorized extrinsic that, after signing with the payment account mentioned in the params, is ready for submission.
+    """
+    api = Cord.ConfigService.get('api')
+
+    signable_call = api.registry.create_type(
+        api.tx.did.submitDidCall.meta.args[0].type.toString(),
+        {
+            'txCounter': params['txCounter'],
+            'did': to_chain(params['did']),
+            'call': params['call'],
+            'submitter': params['submitter'],
+            'blockNumber': params.get('blockNumber') or await api.query.system.number(),
+        }
+    )
+
+    signature = await params['sign']({
+        'data': signable_call.to_u8a(),
+        'keyRelationship': params['keyRelationship'],
+        'did': params['did'],
+    })
+
+    encoded_signature = {
+        signature['keyType']: signature['signature']
+    }
+
+    return api.tx.did.submitDidCall(signable_call, encoded_signature)
+
+
+#---------FullDidFuntions----------------
+
+method_mapping = {
+    'statement': 'authentication',
+    'schema': 'authentication',
+    'chainSpace.addAdminDelegate': 'capabilityDelegation',
+    'chainSpace.addAuditDelegate': 'capabilityDelegation',
+    'chainSpace.addDelegate': 'capabilityDelegation',
+    'chainSpace.removeDelegate': 'capabilityDelegation',
+    'chainSpace.create': 'authentication',
+    'chainSpace.archive': 'authentication',
+    'chainSpace.restore': 'authentication',
+    'chainSpace.subspaceCreate': 'authentication',
+    'chainSpace.updateTransactionCapacitySub': 'authentication',
+    'did': 'authentication',
+    'did.create': None,
+    'did.submitDidCall': None,
+    'didLookup': 'authentication',
+    'didName': 'authentication',
+    'networkScore': 'authentication',
+    'asset': 'authentication',
+}
+
+async def authorize_tx(did, extrinsic, sign, submitter_account, signing_options=None):
+    """
+    Signs and returns the provided unsigned extrinsic with the right DID key, if present. Otherwise, it will throw an error.
+
+    Args:
+        did (DidUri): The DID data.
+        extrinsic (Extrinsic): The unsigned extrinsic to sign.
+        sign (SignExtrinsicCallback): The callback to sign the operation.
+        submitter_account (CordAddress): The account to bind the DID operation to (to avoid MitM and replay attacks).
+        signing_options (dict, optional): The signing options.
+        signing_options['txCounter'] (BN, optional): The optional DID nonce to include in the operation signatures. By default, it uses the next value of the nonce stored on chain.
+
+    Returns:
+        SubmittableExtrinsic: The DID-signed submittable extrinsic.
+    """
+    if signing_options is None:
+        signing_options = {}
+
+    
+    key_relationship = get_key_relationship_for_tx(extrinsic)
+    if key_relationship is None:
+        raise Errors.SDKError('No key relationship found for extrinsic')
+
+    # TODO : tx_counter = signing_options.get('tx_counter') or (await get_next_nonce(did))
+    tx_counter = signing_options.get('tx_counter') 
+
+    return generate_did_authenticated_tx({
+        'did': did,
+        'keyRelationship': key_relationship,
+        'sign': sign,
+        'call': extrinsic,
+        'txCounter': tx_counter,
+        'submitter': submitter_account,
+    })
+
+def get_key_relationship_for_tx(extrinsic):
+    """
+    Detect the key relationship for a key which should be used to DID-authorize the provided extrinsic.
+
+    Args:
+        extrinsic (Extrinsic): The unsigned extrinsic to inspect.
+
+    Returns:
+        VerificationKeyRelationship or None: The key relationship.
+    """
+    return get_key_relationship_for_method(extrinsic.method)
+
+def get_key_relationship_for_method(call):
+    """
+    Get the key relationship for the given method.
+
+    Args:
+        call (Extrinsic['method']): The method to inspect.
+
+    Returns:
+        VerificationKeyRelationship or None: The key relationship.
+    """
+    section = call.section
+    method = call.method
+
+    # Get the VerificationKeyRelationship of a batched call
+    if section == 'utility' and method in ['batch', 'batchAll', 'forceBatch'] and call.args[0].to_raw_type() == 'Vec<Call>':
+        # Map all calls to their VerificationKeyRelationship and deduplicate the items
+        key_relationships = [get_key_relationship_for_method(sub_call) for sub_call in call.args[0]]
+        return key_relationships[0] if all(x == key_relationships[0] for x in key_relationships) else None
+
+    signature = f"{section}.{method}"
+    if signature in method_mapping:
+        return method_mapping[signature]
+
+    return method_mapping.get(section)

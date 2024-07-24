@@ -9,6 +9,7 @@ from packages.utils.src.idents import SPACE_IDENT, AUTH_IDENT
 from packages.utils.src.prefix import SPACE_PREFIX, AUTH_PREFIX
 from packages.did.src.Did_chain import to_chain
 from packages.utils.src.SDKErrors import Errors
+from packages.sdk.src import Did
 
 
 async def get_uri_for_space(space_digest, creator_uri):
@@ -79,15 +80,73 @@ async def sudo_approve_chain_space(authority, space_uri, capacity):
         call_tx = api.compose_call(
             call_module="ChainSpace",
             call_function="approve",
-            call_params={"space_id": space_id, "txn_capacity": capacity}
+            call_params={"space_id": space_id, "txn_capacity": capacity},
         )
         sudo_tx = api.compose_call(
-            call_module="Sudo",
-            call_function="sudo",
-            call_params={'call': call_tx}
+            call_module="Sudo", call_function="sudo", call_params={"call": call_tx}
         )
 
         extrinsic = api.create_signed_extrinsic(call=sudo_tx, keypair=authority)
         api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
     except Exception as error:
+        raise Errors.CordDispatchError(f"Error dispatching to chain: {error}")
+
+
+async def prepare_create_space_extrinsic(
+    chain_space, creator_uri, sign_callback, author_account
+):
+    """
+    Prepares a ChainSpace creation transaction for the CORD blockchain.
+
+    Args:
+        chain_space (IChainSpace): The ChainSpace object containing necessary information for creating the ChainSpace on the blockchain.
+        creator_uri (str): The DID URI of the creator, used to authorize the transaction.
+        sign_callback (function): The callback function for signing the transaction.
+        author_account (CordKeyringPair): The blockchain account used for signing and submitting the transaction.
+
+    Returns:
+        The prepared extrinsic ready to be signed and submitted.
+
+
+    """
+    try:
+        # Retrieve the API instance from the configuration service
+        api = ConfigService.get("api")
+
+        tx = api.compose_call(
+            call_module="ChainSpace", call_function="create", call_params={"space_code": chain_space['digest']}
+        )
+
+        # Authorize the transaction using the creator's URI and the provided sign callback
+        extrinsic = await Did.authorize_tx(
+            creator_uri, tx, sign_callback, author_account.address
+        )
+
+
+        return extrinsic
+    except Exception as error:
+        # Raise a custom dispatch error if any exception occurs
+        raise Errors.CordDispatchError(
+            f"Error preparing extrinsic for creation of chainspace: {error}"
+        )
+
+
+async def dispatch_to_chain(chain_space, creator_uri, author_account, sign_callback):
+    return_object = {
+        "uri": chain_space["uri"],
+        "authorization": chain_space["authorization_uri"],
+    }
+
+    try:
+        # Prepare the extrinsic for creating the ChainSpace
+        extrinsic = await prepare_create_space_extrinsic(
+            chain_space, creator_uri, sign_callback, author_account
+        )
+
+        # Sign and submit the extrinsic transaction with the author account
+        ConfigService.get("api").submit_extrinsic(extrinsic, wait_for_inclusion=True)
+
+        return return_object
+    except Exception as error:
+        # Raise a custom dispatch error if any exception occurs
         raise Errors.CordDispatchError(f"Error dispatching to chain: {error}")
