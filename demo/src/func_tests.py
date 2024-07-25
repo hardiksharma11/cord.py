@@ -162,6 +162,19 @@ async def main():
     logger.info(Fore.GREEN + pformat(subspace) + Style.RESET_ALL)
     logger.info("✅ Subspace created!")
 
+    subspace_tx = await Cord.Chainspace.dispatch_update_tx_capacity_to_chain(
+        subspace['uri'],
+        issuer_did["uri"],
+        author_identity,
+        300,
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        },
+    )
+
+    logger.info('❄️  SubSpace limit is updated')
+
 
 if __name__ == "__main__":
     asyncio.run(main())
