@@ -151,3 +151,36 @@ async def dispatch_to_chain(chain_space, creator_uri, author_account, sign_callb
     except Exception as error:
         # Raise a custom dispatch error if any exception occurs
         raise Errors.CordDispatchError(f"Error dispatching to chain: {error}")
+
+async def dispatch_subspace_create_to_chain(chain_space, creator_uri, author_account, count, parent, sign_callback):
+    return_object = {
+        'uri': chain_space['uri'],
+        'authorization': chain_space['authorization_uri']
+    }
+
+    try:
+        api = ConfigService.get('api')
+
+        tx = api.compose_call(
+            call_module='ChainSpace',
+            call_function='subspace_create',
+            call_params={
+                'space_code': chain_space['digest'],
+                'count': count,
+                'space_id': parent.replace('space:cord:', '') if parent else None
+            }
+        )
+
+        extrinsic = await Did.authorize_tx(
+            creator_uri,
+            tx,
+            sign_callback,
+            author_account.ss58_address
+        )
+
+        extrinsic = api.create_signed_extrinsic(extrinsic, keypair = author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion = True)
+
+        return return_object
+    except Exception as error:
+        raise Errors.CordDispatchError(f"Error dispatching to chain: \"{error}\".")

@@ -134,7 +134,7 @@ async def main():
             "key_type": issuer_keys["authentication"].crypto_type,
         },
     )
-
+    logger.info(Fore.GREEN + pformat(space) + Style.RESET_ALL)
     logger.info("✅ Chain Space created!")
     logger.info("❄️  Chain Space Approval ")
 
@@ -142,6 +142,25 @@ async def main():
         authority_author_identity, space["uri"], 1000
     )
     logger.info("✅ Chain Space approved!")
+
+    # Step 3.5: Subspace
+    subspace_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
+    logger.info(Fore.GREEN + pformat(subspace_properties) + Style.RESET_ALL)
+
+    subspace = await Cord.Chainspace.dispatch_subspace_create_to_chain(
+        subspace_properties,
+        issuer_did["uri"],
+        author_identity,
+        200,
+        space['uri'],
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        },
+    
+    )
+    logger.info(Fore.GREEN + pformat(subspace) + Style.RESET_ALL)
+    logger.info("✅ Subspace created!")
 
 
 if __name__ == "__main__":
