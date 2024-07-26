@@ -181,6 +181,19 @@ async def main():
     space_auth_properties = await Cord.Chainspace.build_from_authorization_properties(space["uri"],delegate_two_did["uri"],permission,issuer_did["uri"])
     logger.info(Fore.GREEN + pformat(space_auth_properties) + Style.RESET_ALL)
 
+    logger.info('❄️  Space Delegation To Chain ')
+    delegate_auth = await Cord.Chainspace.dispatch_delegate_authorization(
+        space_auth_properties,
+        author_identity,
+        space['authorization'],
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        },
+    )
+    logger.info(Fore.GREEN + pformat(delegate_auth) + Style.RESET_ALL)
+    logger.info(f"✅ Space Authorization - {delegate_auth} - added!")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

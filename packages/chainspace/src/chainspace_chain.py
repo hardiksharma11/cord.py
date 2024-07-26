@@ -10,6 +10,7 @@ from packages.utils.src.prefix import SPACE_PREFIX, AUTH_PREFIX
 from packages.did.src.Did_chain import to_chain
 from packages.utils.src.SDKErrors import Errors
 from packages.sdk.src import Did
+from packages.utils.src.permissions import Permission
 
 
 async def get_uri_for_space(space_digest, creator_uri):
@@ -263,3 +264,91 @@ async def get_uri_for_authorization(space_uri, delegate_uri, creator_uri):
     authorization_uri = hash_to_uri(auth_digest, AUTH_IDENT, AUTH_PREFIX)
 
     return authorization_uri
+
+
+async def dispatch_delegate_authorization_tx(permission, space_id, delegate_id, auth_id):
+    """
+    Dispatches a delegate authorization request to the CORD blockchain.
+
+    This function handles the submission of delegate authorization requests to the CORD blockchain. It manages
+    the process of transaction preparation, signing, and submission, facilitating the delegation of specific
+    permissions within a ChainSpace. The function ensures that the authorization is correctly dispatched to
+    the blockchain with the necessary signatures.
+
+    :param permission: The type of permission being granted.
+    :param space_id: The identifier of the space to which the delegate authorization is being added.
+    :param delegate_id: The decentralized identifier (DID) of the delegate receiving the authorization.
+    :param auth_id: The identifier of the specific authorization transaction being constructed.
+    :throws: SDKErrors.CordDispatchError - Thrown when there's an error during the dispatch process.
+    """
+    api = ConfigService.get("api")
+
+    try:
+        if permission == Permission.ASSERT:
+            call = api.compose_call(
+                call_module='ChainSpace',
+                call_function='add_delegate',
+                call_params={'space_id': space_id, 'delegate': delegate_id, 'authorization': auth_id}
+            )
+        elif permission == Permission.DELEGATE:
+            call = api.compose_call(
+                call_module='ChainSpace',
+                call_function='add_delegator',
+                call_params={'space_id': space_id, 'delegate': delegate_id, 'authorization': auth_id}
+            )
+        elif permission == Permission.ADMIN:
+            call = api.compose_call(
+                call_module='ChainSpace',
+                call_function='add_admin_delegate',
+                call_params={'space_id': space_id, 'delegate': delegate_id, 'authorization': auth_id}
+            )
+        else:
+            raise Errors.InvalidPermissionError(f'Permission not valid: "{permission}".')
+
+        return call
+    except Exception as error:
+        raise Errors.CordDispatchError(f'Error dispatching to chain: "{error}".')
+    
+
+async def dispatch_delegate_authorization(request, author_account, authorization_uri, sign_callback):
+    """
+    Dispatches a delegate authorization transaction to the CORD blockchain.
+
+    This function manages the process of submitting a delegate authorization request to the blockchain. It checks if
+    the specified authorization already exists. If it does not, the function constructs and submits a transaction to
+    authorize a delegate for a specific space. The transaction is authorized by the delegator's DID and signed using
+    the provided blockchain account.
+
+
+    :param request: The space authorization request containing necessary information for dispatching the authorization.
+    :param author_account: The blockchain account used to sign and submit the transaction.
+    :param authorization_uri: The URI of the authorization used for delegating permissions.
+    :param sign_callback: A callback function that handles the signing of the transaction.
+    :returns: A promise resolving to the authorization ID after successful processing by the blockchain.
+    :throws: SDKErrors.CordDispatchError - Thrown on error during the dispatch process.
+    """
+    try:
+        api = ConfigService.get("api")
+
+        space_id = uri_to_identifier(request['uri'])
+        delegate_id = Did.to_chain(request['delegate_uri'])
+        delegator_auth_id = uri_to_identifier(authorization_uri)
+
+        tx = await dispatch_delegate_authorization_tx(
+            request['permission'],
+            space_id,
+            delegate_id,
+            delegator_auth_id
+        )
+
+        extrinsic = await Did.authorize_tx(
+            request['delegator_uri'], tx, sign_callback, author_account.ss58_address
+        )
+
+        extrinsic = api.create_signed_extrinsic(extrinsic, keypair=author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
+        
+        return request['authorization_uri']
+    except Exception as error:
+        raise Errors.CordDispatchError(f'Error dispatching delegate authorization: {error}')
+

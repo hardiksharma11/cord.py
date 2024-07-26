@@ -1,9 +1,16 @@
 import uuid
 from packages.utils.src.crypto_utils import blake2_as_hex
 from .chainspace_chain import get_uri_for_space, get_uri_for_authorization
-from .chainspace_chain import sudo_approve_chain_space, dispatch_to_chain, dispatch_subspace_create_to_chain,dispatch_update_tx_capacity_to_chain
+from .chainspace_chain import (
+    sudo_approve_chain_space,
+    dispatch_to_chain,
+    dispatch_subspace_create_to_chain,
+    dispatch_update_tx_capacity_to_chain,
+    dispatch_delegate_authorization,
+)
 
-async def build_from_properties(creator_uri, chain_space_desc = None):
+
+async def build_from_properties(creator_uri, chain_space_desc=None):
     """
     Creates a new ChainSpace object in the CORD blockchain.
 
@@ -18,23 +25,25 @@ async def build_from_properties(creator_uri, chain_space_desc = None):
     """
 
     if chain_space_desc == None:
-        chain_space_description = f'ChainSpace v1.${uuid.uuid4()}'
+        chain_space_description = f"ChainSpace v1.${uuid.uuid4()}"
     else:
-     chain_space_description = chain_space_desc
+        chain_space_description = chain_space_desc
 
-    chain_space_hash = '0x' + blake2_as_hex(chain_space_description.encode())
+    chain_space_hash = "0x" + blake2_as_hex(chain_space_description.encode())
     uri_info = await get_uri_for_space(chain_space_hash, creator_uri)
 
     return {
-        'uri': uri_info['uri'],
-        'desc': chain_space_description,
-        'digest': chain_space_hash,
-        'creator_uri': creator_uri,
-        'authorization_uri': uri_info['authorization_uri'],
+        "uri": uri_info["uri"],
+        "desc": chain_space_description,
+        "digest": chain_space_hash,
+        "creator_uri": creator_uri,
+        "authorization_uri": uri_info["authorization_uri"],
     }
 
 
-async def build_from_authorization_properties(space_uri, delegate_uri, permission, creator_uri):
+async def build_from_authorization_properties(
+    space_uri, delegate_uri, permission, creator_uri
+):
     """
     Authorizes a delegate within a ChainSpace, allowing them to perform actions on behalf of the creator.
 
@@ -50,15 +59,13 @@ async def build_from_authorization_properties(space_uri, delegate_uri, permissio
 
     """
     authorization_uri = await get_uri_for_authorization(
-        space_uri,
-        delegate_uri,
-        creator_uri
+        space_uri, delegate_uri, creator_uri
     )
 
     return {
-        "uri" : space_uri, 
-        "delegate_uri" : delegate_uri,
-        "permission" : permission,
-        "authorization_uri" : authorization_uri,
-        "delegator_uri" : creator_uri
+        "uri": space_uri,
+        "delegate_uri": delegate_uri,
+        "permission": permission,
+        "authorization_uri": authorization_uri,
+        "delegator_uri": creator_uri,
     }
