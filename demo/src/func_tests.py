@@ -175,6 +175,12 @@ async def main():
 
     logger.info('❄️  SubSpace limit is updated')
 
+    # Step 4: Add Delelegate Two as Registry Delegate
+    logger.info("❄️  Space Delegate Authorization ")
+    permission = Cord.Permission.ASSERT
+    space_auth_properties = await Cord.Chainspace.build_from_authorization_properties(space["uri"],delegate_two_did["uri"],permission,issuer_did["uri"])
+    logger.info(Fore.GREEN + pformat(space_auth_properties) + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
