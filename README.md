@@ -21,10 +21,10 @@ To build the SDK and see changes, follow these steps:
      python setup.py install
 
 ## Required Dependencies
-- substrate-interface
-- base58
-- mnemonic
-- pynacl
+- [substrate-interface](https://polkascan.github.io/py-substrate-interface/)
+- [base58](https://pypi.org/project/base58/)
+- [mnemonic](https://pypi.org/project/mnemonic/)
+- [pynacl](https://pypi.org/project/PyNaCl/)
 
 ## Experimenting with SDK Methods
 ## Demo Methods
