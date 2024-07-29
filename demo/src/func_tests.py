@@ -187,13 +187,23 @@ async def main():
         author_identity,
         space['authorization'],
         lambda data: {
-            "signature": issuer_keys["authentication"].sign(data["data"]),
-            "key_type": issuer_keys["authentication"].crypto_type,
+            "signature": issuer_keys["capability_delegation"].sign(data["data"]),
+            "key_type": issuer_keys["capability_delegation"].crypto_type,
         },
     )
     logger.info(Fore.GREEN + pformat(delegate_auth) + Style.RESET_ALL)
     logger.info(f"✅ Space Authorization - {delegate_auth} - added!")
 
+    logger.info('❄️  Query From Chain - Chain Space Details ')
+
+    space_from_chain = await Cord.Chainspace.fetch_from_chain(space['uri'])
+    logger.info(Fore.GREEN + pformat(space_from_chain) + Style.RESET_ALL)
+
+    logger.info('❄️  Query From Chain - Chain Space Authorization Details ')
+    space_auth_from_chain = await Cord.Chainspace.fetch_authorization_from_chain(delegate_auth)
+    logger.info(Fore.GREEN + pformat(space_auth_from_chain) + Style.RESET_ALL)
+
+    logger.info('✅ Chain Space Functions Completed!')
 
 if __name__ == "__main__":
     asyncio.run(main())

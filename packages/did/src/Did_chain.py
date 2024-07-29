@@ -1,7 +1,7 @@
 import packages.sdk.src as Cord
 from packages.utils.src.crypto_utils import generate_mnemonic
 from packages.utils.src.SDKErrors import Errors
-from .Did_utils import get_address_by_key, get_did_uri_from_key, parse
+from .Did_utils import get_address_by_key, get_did_uri_from_key, parse, get_did_uri
 from .Did_rpc import linked_info_from_chain
 import re
 from urllib.parse import unquote, quote, urlparse
@@ -18,6 +18,8 @@ crypto_type_map = {0: "Ed25519", 1: "Sr25519", 2: "Ecdsa"}
 def to_chain(did_uri):
     return parse(did_uri)["address"]
 
+def from_chain(encoded):
+    return get_did_uri(encoded)
 
 def resource_id_to_chain(id):
     """
@@ -461,4 +463,5 @@ def get_key_relationship_for_method(call):
     if signature in method_mapping:
         return method_mapping[signature]
 
+    
     return method_mapping.get(section)

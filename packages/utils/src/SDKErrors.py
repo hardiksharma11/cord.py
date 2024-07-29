@@ -87,6 +87,15 @@ class CordDispatchError(SDKError):
 
 class InvalidPermissionError(SDKError):
     pass
+
+class ChainSpaceMissingError(SDKError):
+    pass
+
+class AuthorizationMissingError(SDKError):
+    pass
+
+class CordFetchError(SDKError):
+    pass
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -102,3 +111,6 @@ class Errors:
     DidExporterError = DidExporterError
     CordDispatchError = CordDispatchError
     InvalidPermissionError = InvalidPermissionError
+    ChainSpaceMissingError = ChainSpaceMissingError
+    AuthorizationMissingError = AuthorizationMissingError
+    CordFetchError = CordFetchError
