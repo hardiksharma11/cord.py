@@ -8,6 +8,7 @@ setup(
         'substrate-interface',
         'base58',
         'mnemonic',
-        'pynacl'
+        'pynacl',
+        'cbor2'
     ],
 )
