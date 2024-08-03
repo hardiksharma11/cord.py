@@ -12,6 +12,8 @@ import logging
 import logging
 from pprint import pformat
 from colorama import Fore, Style, init
+import json
+import uuid
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -204,6 +206,15 @@ async def main():
     logger.info(Fore.GREEN + pformat(space_auth_from_chain) + Style.RESET_ALL)
 
     logger.info('✅ Chain Space Functions Completed!')
+
+    # Step 5: Create a new Schema
+    logger.info('❄️  Schema Creation ')
+    with open('demo/res/schema.json', 'r') as file:
+        new_schema_content = json.load(file)
+
+    new_schema_name = f"{new_schema_content['title']}:{uuid.uuid4()}"
+    new_schema_content['title'] = new_schema_name
+
 
 if __name__ == "__main__":
     asyncio.run(main())
