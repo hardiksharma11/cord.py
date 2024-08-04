@@ -94,6 +94,7 @@ def build_from_properties(schema, space_uri, creator_uri):
     @throws: SDKErrors.SchemaStructureError if the constructed schema fails to conform to the expected structure
              or standards. This error ensures the integrity and compliance of the schema with predefined models.
     """
+    
     schema_copy = {k: v for k, v in schema.items() if k != "$id"}
     schema_copy["additionalProperties"] = False
     schema_copy["$schema"] = SchemaModelV1['$id']
