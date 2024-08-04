@@ -464,4 +464,4 @@ def get_key_relationship_for_method(call):
         return method_mapping[signature]
 
     
-    return method_mapping.get(section)
+    return method_mapping[f"{section}"]
