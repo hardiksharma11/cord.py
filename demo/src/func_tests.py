@@ -230,5 +230,10 @@ async def main():
     )
     logger.info(f"✅ Schema - {schema_uri} - added!")
 
+    logger.info('❄️  Query From Chain - Schema ')
+    schema_from_chain = await Cord.Schema.schema_chain.fetch_from_chain(schema_properties["schema"]["$id"])
+    logger.info(Fore.GREEN + pformat(schema_from_chain) + Style.RESET_ALL)
+    logger.info('✅ Schema Functions Completed!')
+
 if __name__ == "__main__":
     asyncio.run(main())

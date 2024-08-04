@@ -5,10 +5,12 @@ from collections import OrderedDict
 from packages.identifier.src.identifier import (
     hash_to_uri,
     uri_to_identifier,
+    identifier_to_uri
 )
 from packages.utils.src.idents import SCHEMA_IDENT
 from packages.utils.src.prefix import SCHEMA_PREFIX
 from packages.utils.src.SDKErrors import Errors
+from .schema_types import SchemaModel
 
 
 def encode_cbor_schema(schema):
@@ -149,3 +151,96 @@ async def dispatch_to_chain(
         return schema["$id"]
     except Exception as error:
         raise Errors.CordDispatchError(f'Error dispatching to chain: "{error}".')
+
+def schema_input_from_chain(input, schema_uri):
+    """
+    (Internal Function) - Fetches and reconstructs a schema object from the blockchain using its URI.
+    This function retrieves encoded schema data from the blockchain, decodes it, and constructs a structured
+    schema object.
+
+    :param input: The raw input data in bytes, representing the encoded schema data on the blockchain.
+    :param schema_uri: The URI (`$id`) of the schema to be fetched, used to uniquely identify the schema on the blockchain.
+    :returns: The reconstructed schema object based on the blockchain data.
+              This object includes all the decoded properties and structure of the original schema.
+    :raises SDKErrors.SchemaError: Thrown when the input data cannot be decoded into a valid schema, or if the
+                                   specified schema is not found on the blockchain. This error provides details
+                                   about the nature of the decoding or retrieval issue.
+    """
+    try:
+        base64_input = input.encode('utf-8')
+        binary_data = base64.b64decode(base64_input)
+
+        decoded_schema = cbor2.loads(binary_data)
+
+        reconstructed_schema = {
+            '$id': schema_uri,
+            **decoded_schema
+        }
+        # If throws if the input was a valid JSON but not a valid Schema.
+        from .schema import verify_object_against_schema
+        verify_object_against_schema(reconstructed_schema, SchemaModel)
+        return reconstructed_schema
+    except Exception as cause:
+        raise Errors.SchemaError(
+            f'The provided payload cannot be parsed as a Schema: {input}',
+            cause
+        )
+
+
+def from_chain(encoded_entry, schema_uri):
+    """
+    Converts a blockchain-encoded schema entry to a more readable and usable format.
+
+    :param encoded_entry: The blockchain-encoded schema entry. It is wrapped in an `Option` type to handle the possibility that the schema might not exist.
+    :param schema_uri: The URI (`$id`) of the schema being processed.
+
+    :returns: Returns an object containing the schema information if the schema exists on the blockchain. If the schema does not exist, it returns `null`.
+    """
+    if encoded_entry.value:
+        unwrapped = encoded_entry.value
+        schema = unwrapped["schema"]
+        digest = unwrapped["digest"]
+        creator = unwrapped["creator"]
+        space = unwrapped["space"]
+      
+        return {
+            "schema": schema_input_from_chain(schema, schema_uri),
+            "digest": digest,
+            "space_uri": identifier_to_uri(space),
+            "creator_uri": Did.from_chain(creator),
+        }
+    return None
+
+async def fetch_from_chain(schema_uri):
+    """
+    Retrieves schema details from the blockchain using a given schema ID.
+
+    :param schema_uri: The unique identifier of the schema, formatted as a URI string.
+           This ID is used to locate and retrieve the schema on the blockchain, ensuring accuracy in schema retrieval.
+
+    :returns: A promise that resolves to the schema details if found on the blockchain.
+              If the schema is not present, the promise resolves to `null`.
+              This approach provides a straightforward method for accessing schema information by their unique identifiers.
+
+    :raises SDKErrors.SchemaError: Thrown if the schema with the provided ID is not found on the blockchain.
+    :raises SDKErrors.CordFetchError: Thrown in case of errors during the fetching process, such as network
+            issues or problems with querying the blockchain.
+    """
+    try:
+        api = ConfigService.get('api')
+        cord_schema_id = uri_to_identifier(schema_uri)
+
+        schema_entry = api.query('Schema','Schemas' ,[cord_schema_id])
+        decoded_schema = from_chain(schema_entry, schema_uri)
+
+        if decoded_schema is None:
+            raise Errors.SchemaError(
+                f'There is not a Schema with the provided URI "{schema_uri}" on chain.'
+            )
+
+        return decoded_schema
+    except Exception as error:
+        print('Error fetching schema from chain:', error)
+        raise Errors.CordFetchError(
+            f'Error occurred while fetching schema from chain: {error}'
+        )
