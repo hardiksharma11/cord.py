@@ -255,6 +255,18 @@ async def main():
     )
     logger.info(Fore.GREEN + pformat(statement_entry) + Style.RESET_ALL)
 
+    statement = await Cord.Statement.statement_chain.dispatch_register_to_chain(
+        statement_entry,
+        issuer_did["uri"],
+        author_identity,
+        space["authorization"],
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        }
+    )
+
+    logger.info(f"✅ Statement element registered - {statement}")
 
 if __name__ == "__main__":
     asyncio.run(main())
