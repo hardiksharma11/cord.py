@@ -14,6 +14,7 @@ from pprint import pformat
 from colorama import Fore, Style, init
 import json
 import uuid
+from datetime import datetime,timezone
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -234,6 +235,17 @@ async def main():
     schema_from_chain = await Cord.Schema.schema_chain.fetch_from_chain(schema_properties["schema"]["$id"])
     logger.info(Fore.GREEN + pformat(schema_from_chain) + Style.RESET_ALL)
     logger.info('✅ Schema Functions Completed!')
+
+    # Step 6: Delegate creates a new Verifiable Document
+    logger.info("❄️  Statement Creation ")
+    with open('demo/res/cred.json', 'r') as file:
+        new_cred_content = json.load(file)
+
+    new_cred_content['issuanceDate'] = datetime.now(timezone.utc).isoformat()
+    serialized_cred = Cord.Utils.crypto_utils.encode_object_as_str(new_cred_content)
+    cred_hash = Cord.Utils.crypto_utils.hash_str(serialized_cred.encode('utf-8'))
+
+    logger.info(Fore.GREEN + pformat(new_cred_content) + Style.RESET_ALL)
 
 if __name__ == "__main__":
     asyncio.run(main())
