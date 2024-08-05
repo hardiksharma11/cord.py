@@ -111,6 +111,7 @@ async def main():
     delegate_two = await Cord.Did.create_did(author_identity)
     delegate_two_mnemonic = delegate_two.get('mnemonic')
     delegate_two_did = delegate_two.get('document')
+    delegate_two_keys = Cord.Did.generate_keypairs(delegate_two_mnemonic, "sr25519")
 
     logger.info(f'🏦  Delegate ({delegate_two_did["assertion_method"][0]["type"]}): {delegate_two_did["uri"]}')
     # Create Delegate 3 DID
@@ -283,6 +284,19 @@ async def main():
     )
 
     logger.info(Fore.GREEN + pformat(updated_statement_entry) + Style.RESET_ALL)
+
+    updated_statement = await Cord.Statement.statement_chain.dispatch_update_to_chain(
+        updated_statement_entry,
+        delegate_two_did['uri'],
+        author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": delegate_two_keys["authentication"].sign(data["data"]),
+            "key_type": delegate_two_keys["authentication"].crypto_type,
+        }
+    )
+
+    logger.info(f"✅ Statement element registered - {updated_statement}")
 
 if __name__ == "__main__":
     asyncio.run(main())
