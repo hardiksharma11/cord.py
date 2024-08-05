@@ -57,12 +57,15 @@ def decode_address(address):
     return ss58.ss58_decode(address)
 
 # Utility functions
-def is_hex(data):
-    try:
-        int(data, 16)
-        return True
-    except ValueError:
+def is_hex(data, bit_length):
+    if data.startswith('0x'):
+        data = data[2:]
+    else :
         return False
+    
+    if len(data)*4 != bit_length:
+        return False
+    return True
 
 def hex_to_bn(hex_string):
     return int(hex_string, 16)

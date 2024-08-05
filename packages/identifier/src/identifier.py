@@ -144,7 +144,10 @@ def encode_identifier(key, iDPrefix):
     assert_condition(key, "Invalid key string passed")
 
     # Decode the key to byte array, allowing re-encoding of an identifier
-    u8a = u8a_to_u8a('0x' + key)
+    if(not key.startswith('0x')):
+        key = '0x' + key
+        
+    u8a = u8a_to_u8a(key)
 
     # Validate the identifier prefix
     assert_condition(
