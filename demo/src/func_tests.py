@@ -268,5 +268,21 @@ async def main():
 
     logger.info(f"✅ Statement element registered - {statement}")
 
+    logger.info("❄️  Statement Updation ")
+    update_cred_content = new_cred_content
+    update_cred_content['issuanceDate'] = datetime.now(timezone.utc).isoformat()
+    update_cred_content['name'] = 'Bachelor of Science'
+    serialized_up_cred  = Cord.Utils.crypto_utils.encode_object_as_str(update_cred_content)
+    up_cred_hash = '0x'+ Cord.Utils.crypto_utils.hash_str(serialized_up_cred.encode('utf-8'))
+
+    updated_statement_entry = Cord.Statement.statement.build_from_update_properties(
+        statement_entry['element_uri'],
+        up_cred_hash,
+        space['uri'],
+        delegate_two_did['uri'],
+    )
+
+    logger.info(Fore.GREEN + pformat(updated_statement_entry) + Style.RESET_ALL)
+
 if __name__ == "__main__":
     asyncio.run(main())
