@@ -118,6 +118,9 @@ class StatementHashMissingError(SDKError):
 
 class DuplicateStatementError(SDKError):
     pass
+
+class StatementError(SDKError):
+    pass
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -143,3 +146,4 @@ class Errors:
     StatementHashMissingError = StatementHashMissingError
     HashMalformedError = HashMalformedError
     DuplicateStatementError = DuplicateStatementError
+    StatementError = StatementError
