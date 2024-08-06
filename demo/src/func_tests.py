@@ -325,8 +325,34 @@ async def main():
     else:
         logger.info(f"🚫 Verification failed! - {another_verification_result['message']} 🚫")
 
-    
+    logger.info(f"❄️  Revoke Statement - {updated_statement_entry['element_uri']}")
 
-    
+    await Cord.Statement.statement_chain.dispatch_revoke_to_chain(
+        updated_statement_entry['element_uri'],
+        delegate_two_did['uri'],
+        author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": delegate_two_keys["authentication"].sign(data["data"]),
+            "key_type": delegate_two_keys["authentication"].crypto_type,
+        }
+    )
+
+    logger.info("✅ Statement revoked!")
+
+    logger.info("❄️  Statement Re-verification ")
+    re_verification_result = await Cord.Statement.statement.verify_against_properties(
+        updated_statement_entry['element_uri'],
+        up_cred_hash,
+        issuer_did['uri'],
+        space["uri"]
+    )
+
+    if(re_verification_result['is_valid']):
+        logger.info(f"✅ Verification successful! {updated_statement_entry['element_uri']} 🎉")
+    else:
+        logger.info(f"🚫 Verification failed! - {re_verification_result['message']} 🚫")
+
+
 if __name__ == "__main__":
     asyncio.run(main())
