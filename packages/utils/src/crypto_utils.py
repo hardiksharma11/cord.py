@@ -152,3 +152,10 @@ def encode_object_as_str(value):
     normalized_str = unicodedata.normalize('NFC', input_str)
     
     return normalized_str
+
+
+def hash_object_as_hex_string(value, bit_length = 32, nonce = None):
+    input_str = encode_object_as_str(value)
+    if nonce is not None:
+        input_str = f"{input_str}{nonce}"
+    return '0x' + hash_str(input_str.encode('utf-8'), bit_length)

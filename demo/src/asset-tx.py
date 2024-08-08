@@ -5,7 +5,7 @@ from utils.create_authorities import add_network_member
 import logging
 from pprint import pformat
 from colorama import Fore, Style, init
-
+import uuid
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -88,6 +88,25 @@ async def main():
     )
     logger.info("✅ Chain Space approved!")
 
+    # Step 2: Create assets on-chain
+    asset_properties = {
+        "asset_type" : Cord.Asset.asset.AssetTypeOf.art,
+        "asset_desc" : f"Asset - {uuid.uuid4()}",
+        "asset_qty" : 10000,
+        "asset_value" : 100,
+        "asset_tag" : f"Tag - {uuid.uuid4()}",
+        "asset_meta" : f"Meta - {uuid.uuid4()}",
+    }
+
+    logger.info("❄️  Asset Properties - Created by Issuer  ")
+    logger.info(Fore.GREEN + pformat(asset_properties) + Style.RESET_ALL)
+
+    asset_entry = await Cord.Asset.asset.build_from_asset_properties(
+        asset_properties, issuer_did["uri"], space["uri"]
+    )    
+
+    logger.info("❄️  Asset Transaction  - Created by Issuer  ")
+    logger.info(Fore.GREEN + pformat(asset_entry) + Style.RESET_ALL)
 
 
 if __name__ == "__main__":
