@@ -140,6 +140,27 @@ async def main():
             "key_type": issuer_keys["authentication"].crypto_type,
         },
     )
+
+    # Step 4: Transfer Asset to New Owner
+    logger.info("❄️  Transfer Asset to New Owner (Holder2) - Holder Action  ")
+    asset_transfer = await Cord.Asset.asset.build_from_transfer_properties(
+        asset_issuence["uri"],
+        holder2_did["uri"],
+        holder_did["uri"],
+    )
+    logger.info(Fore.GREEN + pformat(asset_transfer) + Style.RESET_ALL)
+
+    transfer_extrinsic = await Cord.Asset.asset_chain.dispatch_transfer_to_chain(
+        asset_transfer,
+        network_authority_identity,
+        lambda data: {
+            "signature": holder_keys["authentication"].sign(data["data"]),
+            "key_type": holder_keys["authentication"].crypto_type,
+        },
+    )
+
+    logger.info("✅ Asset transferred!")
+
 if __name__ == "__main__":
     asyncio.run(main())
     logger.info("Bye! 👋 👋 👋 ")

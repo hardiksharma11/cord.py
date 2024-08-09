@@ -89,3 +89,26 @@ async def build_from_issue_properties(
     }
 
     return issuance_details
+
+async def build_from_transfer_properties(
+    asset_uri,
+    asset_new_owner,
+    asset_owner,
+):
+    uri_parts = asset_uri.split(":")
+    transfer_entry = {
+        'asset_id': uri_parts[2],
+        'asset_instance_id': uri_parts[3],
+        'asset_owner': Did.to_chain(asset_owner),
+        'new_asset_owner': Did.to_chain(asset_new_owner),
+    }
+
+    issue_entry_digest = Utils.crypto_utils.hash_object_as_hex_string(transfer_entry)
+
+    transfer_details = {
+        'entry': transfer_entry,
+        'owner': asset_owner,
+        'digest': issue_entry_digest,
+    }
+
+    return transfer_details
