@@ -120,6 +120,26 @@ async def main():
 
     logger.info("✅ Asset created!")
 
+    # Step 3: Issue Asset to Holder
+    logger.info("❄️  Issue Asset to Holder - Issuer Action  ")
+    asset_issuence = await Cord.Asset.asset.build_from_issue_properties(
+        asset_entry["uri"],
+        holder_did["uri"],
+        1,
+        issuer_did["uri"],
+        space["uri"],
+    )
+
+    logger.info(Fore.GREEN + pformat(asset_issuence) + Style.RESET_ALL)
+    issue_extrinsic = await Cord.Asset.asset_chain.dispatch_issue_to_chain(
+        asset_issuence,
+        network_authority_identity,
+        space["authorization"],
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        },
+    )
 if __name__ == "__main__":
     asyncio.run(main())
     logger.info("Bye! 👋 👋 👋 ")

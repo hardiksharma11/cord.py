@@ -38,3 +38,60 @@ async def dispatch_create_to_chain(
         raise Errors.CordDispatchError(
             f'Error dispatching to chain: "{error_message}".'
         )
+    
+async def prepare_extrinsic(
+    asset_entry,
+    author_account,
+    authorization_uri,
+    sign_callback
+):
+    try:
+        api = ConfigService.get('api')
+
+        authorization_id = uri_to_identifier(authorization_uri)
+
+        tx = api.compose_call(
+            call_module='Asset',
+            call_function='issue',
+            call_params={
+                'entry': asset_entry['entry'],
+                'digest': asset_entry['digest'],
+                'authorization': authorization_id
+            }
+        )
+
+        extrinsic = await Did.authorize_tx(
+            asset_entry['issuer'],
+            tx,
+            sign_callback,
+            author_account.ss58_address
+        )
+
+        return extrinsic
+    except Exception as error:
+        error_message = str(error)
+        raise Errors.CordDispatchError(
+            f'Error preparing extrinsic: "{error_message}".'
+        )
+
+
+async def dispatch_issue_to_chain(
+    asset_entry,
+    author_account,
+    authorization_uri,
+    sign_callback
+):
+    try:
+        api = ConfigService.get('api')
+        extrinsic = await prepare_extrinsic(
+            asset_entry, author_account, authorization_uri, sign_callback
+        )
+        extrinsic = api.create_signed_extrinsic(extrinsic, keypair=author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
+
+        return asset_entry['uri']
+    except Exception as error:
+        error_message = str(error)
+        raise Errors.CordDispatchError(
+            f'Error dispatching to chain: "{error_message}".'
+        )
