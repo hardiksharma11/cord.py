@@ -20,14 +20,16 @@ Before you begin, ensure that you have the following:
      ```
 
    - If pip is not installed, you can install it by following these steps:
-     
-       ```bash
-       sudo apt install python3-pip
-       ```
-     
+     ```bash
+     sudo apt install python3-pip
+     ```
 
 3. **Setuptools**:
-   - Setuptools is required to manage the installation of Python packages. Install it using:
+   - Setuptools is required to manage the installation of Python packages. First, check if it is already installed:
+     ```bash
+     pip show setuptools
+     ```
+   - If it is not installed, you can install it using:
      ```bash
      pip3 install setuptools
      ```
