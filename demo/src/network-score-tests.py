@@ -123,7 +123,7 @@ async def main():
     logger.info("💠  Write Rating - (Genesis) Credit Entry ")
     rating_content = {
         "entity_id":str(uuid.uuid4()),
-        "provide_id":str(uuid.uuid4()),
+        "provider_id":str(uuid.uuid4()),
         "rating_type": Cord.Score.scoring.RatingTypeOf.overall,
         "count_of_txn": 100,
         "total_rating": 320
@@ -139,7 +139,7 @@ async def main():
         "entry": {
                 **rest_of_rating,
                 "provider_did": network_provider_did["uri"].replace('did:cord:', ''),
-                "total_encoding_rating": round(total_rating * 10)
+                "total_encoded_rating": round(total_rating * 10)
         },
         "message_id": str(uuid.uuid4()),
         "entry_digest": entry_digest,
@@ -157,7 +157,22 @@ async def main():
     logger.info("🌐  Rating Information to Ledger (API -> Ledger) ")
     logger.info(Fore.GREEN + pformat(dispatch_entry) + Style.RESET_ALL)
 
+    rating_uri = await Cord.Score.scoring_chain.dispatch_rating_to_chain(
+        dispatch_entry["details"],
+        network_author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": network_author_keys["authentication"].sign(data["data"]),
+            "key_type": network_author_keys["authentication"].crypto_type,
+        },
+    )
 
+    if(Cord.Identifier.identifier.is_valid_identifier(rating_uri)):
+        logger.info("✅ Rating addition successful! 🎉")
+    else:
+        logger.info("🚫 Ledger Anchoring failed! 🚫")
+
+    
 
 if __name__ == "__main__":
     asyncio.run(main())
