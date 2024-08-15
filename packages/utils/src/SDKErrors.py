@@ -121,6 +121,9 @@ class DuplicateStatementError(SDKError):
 
 class StatementError(SDKError):
     pass
+
+class RatingPropertiesError(SDKError):
+    pass
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -147,3 +150,4 @@ class Errors:
     HashMalformedError = HashMalformedError
     DuplicateStatementError = DuplicateStatementError
     StatementError = StatementError
+    RatingPropertiesError = RatingPropertiesError

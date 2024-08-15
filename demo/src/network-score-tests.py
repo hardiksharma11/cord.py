@@ -119,6 +119,45 @@ async def main():
 
     logger.info('✅ Initial Setup Completed! 🎊')
 
+    logger.info("⏳ Network Rating Transaction Flow")
+    logger.info("💠  Write Rating - (Genesis) Credit Entry ")
+    rating_content = {
+        "entity_id":str(uuid.uuid4()),
+        "provide_id":str(uuid.uuid4()),
+        "rating_type": Cord.Score.scoring.RatingTypeOf.overall,
+        "count_of_txn": 100,
+        "total_rating": 320
+    }
+
+    logger.info(Fore.GREEN + pformat(rating_content) + Style.RESET_ALL)
+
+    entry_digest = Cord.Utils.crypto_utils.hash_object_as_hex_string(rating_content)
+    total_rating = rating_content["total_rating"]
+    rest_of_rating = {k: v for k, v in rating_content.items() if k != 'total_rating'}
+
+    transformed_entry = {
+        "entry": {
+                **rest_of_rating,
+                "provider_did": network_provider_did["uri"].replace('did:cord:', ''),
+                "total_encoding_rating": round(total_rating * 10)
+        },
+        "message_id": str(uuid.uuid4()),
+        "entry_digest": entry_digest,
+    }
+
+    logger.info("🌐  Rating Information to API endpoint (/write-ratings) ")
+    logger.info(Fore.GREEN + pformat(transformed_entry) + Style.RESET_ALL)
+
+    dispatch_entry = await Cord.Score.scoring.build_from_rating_properties(
+        transformed_entry,
+        chain_space["uri"],
+        network_author_did["uri"],
+    )
+
+    logger.info("🌐  Rating Information to Ledger (API -> Ledger) ")
+    logger.info(Fore.GREEN + pformat(dispatch_entry) + Style.RESET_ALL)
+
+
 if __name__ == "__main__":
     asyncio.run(main())
     logger.info("Bye! 👋 👋 👋 ")

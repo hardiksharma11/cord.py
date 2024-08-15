@@ -7,4 +7,5 @@ from packages.utils.src.permissions import Permission
 import packages.schema.src as Schema
 import packages.statement.src as Statement
 import packages.asset.src as Asset
+import packages.network_score.src as Score
 
