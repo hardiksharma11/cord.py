@@ -216,6 +216,20 @@ async def main():
     logger.info("🌐  Rating Revoke (Debit) Information to Ledger (API -> Ledger)")
     logger.info(Fore.GREEN + pformat(revoke_rating_dispatch_entry) + Style.RESET_ALL)
 
+    revoked_rating_uri = await Cord.Score.scoring_chain.dispatch_revoke_rating_to_chain(
+        revoke_rating_dispatch_entry["details"],
+        network_author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": network_author_keys["authentication"].sign(data["data"]),
+            "key_type": network_author_keys["authentication"].crypto_type,
+        },
+    )
+
+    if(Cord.Identifier.identifier.is_valid_identifier(revoked_rating_uri)):
+        logger.info("✅ Rating Revoke (Debit) successful! 🎉")
+    else:
+        logger.info("🚫 Debit Anchoring failed!  🚫")
 
 if __name__ == "__main__":
     asyncio.run(main())
