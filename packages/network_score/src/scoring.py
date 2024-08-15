@@ -187,3 +187,45 @@ async def build_from_rating_properties(rating, chain_space, author_uri):
         raise Errors.RatingPropertiesError(
             f'Rating content transformation error: "{error}".'
         )
+
+
+async def build_from_revoke_rating_properties(rating, chain_space, author_uri):
+    """
+    Constructs a revocation entry for a previously submitted rating on the blockchain.
+
+    This function processes a rating revocation entry, verifies the original rating's signature,
+    validates required fields, and generates the necessary signatures for the revocation entry.
+
+    :param rating: The rating revoke entry to process, including the original rating's digest, signature, and other details.
+    :param chain_space: The identifier of the blockchain space where the rating is being revoked.
+    :param author_uri: The DID URI of the author who is revoking the rating.
+    :return: A dictionary containing the unique URI for the revocation entry and its details.
+    :raises RatingPropertiesError: If there is an issue with the revocation's content or signature verification.
+    """
+    try:
+        validate_required_fields(
+            [
+                chain_space,
+                author_uri,
+                rating["entry"]["message_id"],
+                rating["entry"]["entry_digest"],
+            ]
+        )
+        validate_hex_string(rating["entry"]["entry_digest"])
+
+        result = await create_rating_object(
+            rating["entry"]["entry_digest"],
+            rating["entity_id"],
+            rating["entry"]["message_id"],
+            chain_space,
+            rating["provider_did"],
+            author_uri,
+        )
+
+        result["details"]["entry"] = rating["entry"]
+        return result
+
+    except Exception as error:
+        raise Errors.RatingPropertiesError(
+            f'Rating content transformation error: "{error}".'
+        )
