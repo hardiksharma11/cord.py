@@ -229,3 +229,53 @@ async def build_from_revoke_rating_properties(rating, chain_space, author_uri):
         raise Errors.RatingPropertiesError(
             f'Rating content transformation error: "{error}".'
         )
+
+
+async def build_from_revise_rating_properties(rating, chain_space, author_uri):
+    """
+    Constructs a revised entry for a previously amended rating on the blockchain.
+
+    This function is responsible for building a rating object from revised rating properties.
+    It verifies the signature of the amended rating, validates required fields, and generates
+    the necessary signatures for the revised entry.
+
+    :param rating: The rating revise entry to process, including the original rating's digest, signature, and other relevant details.
+    :param chain_space: The identifier of the blockchain space (as a URI) where the rating is being revised.
+    :param author_uri: The Decentralized Identifier (DID) URI of the author who is revising the rating.
+
+    :return: A dictionary containing the URI of the rating entry and its details.
+    :raises RatingPropertiesError: If there is an error during the transformation process.
+    """
+    try:
+        validate_required_fields(
+            [
+                chain_space,
+                author_uri,
+                rating["entry"]["entity_id"],
+                rating["entry"]["provider_id"],
+                rating["reference_id"],
+                rating["entry"]["count_of_txn"],
+                rating["entry"]["total_encoded_rating"],
+            ]
+        )
+        validate_hex_string(rating["entry_digest"])
+
+        result = await create_rating_object(
+            rating["entry_digest"],
+            rating["entry"]["entity_id"],
+            rating["message_id"],
+            chain_space,
+            Did.get_did_uri(rating["entry"]["provider_did"]),
+            author_uri,
+        )
+
+        uri = result["uri"]
+        details = result["details"]
+
+        details["entry"] = rating["entry"]
+        return {"uri": uri, "details": details}
+
+    except Exception as error:
+        raise Errors.RatingPropertiesError(
+            f'Rating content transformation error: "{error}".'
+        )

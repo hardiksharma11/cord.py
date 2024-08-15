@@ -231,6 +231,57 @@ async def main():
     else:
         logger.info("🚫 Debit Anchoring failed!  🚫")
 
+    logger.info("💠  Revised Rating - Credit Entry")
+    revised_rating_content = {
+        **rating_content,
+        "provider_did" :transformed_entry["entry"]["provider_did"],
+        "reference_id" :rating_uri,
+        "count_of_txn": 80,
+        "total_rating": 280
+    } 
+
+    logger.info(Fore.GREEN + pformat(revised_rating_content) + Style.RESET_ALL)
+
+    revised_entry_digest = Cord.Utils.crypto_utils.hash_object_as_hex_string(revised_rating_content)
+    transformed_revised_entry = {
+        "entry":{
+            **revised_rating_content,
+            "reference_id": revoked_rating_uri,
+            "total_encoded_rating": round(revised_rating_content["total_rating"] * 10)
+        },
+        "message_id": str(uuid.uuid4()),
+        "reference_id": revoked_rating_uri,
+        "entry_digest": revised_entry_digest
+    }
+
+    del transformed_revised_entry["entry"]["total_rating"]
+
+    logger.info("🌐  Rating Revised(Credit) Information to API endpoint (/write-ratings)")
+    
+    dispatch_revised_rating = await Cord.Score.scoring.build_from_revise_rating_properties(
+        transformed_revised_entry,
+        chain_space["uri"],
+        network_author_did["uri"],
+    )
+
+    logger.info(Fore.GREEN + pformat(dispatch_revised_rating) + Style.RESET_ALL)
+    logger.info("🌐  Rating Revised(Credit) Information to Ledger (API -> Ledger) ")
+
+    revised_rating_uri = await Cord.Score.scoring_chain.dispatch_revise_rating_to_chain(
+        dispatch_revised_rating["details"],
+        network_author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": network_author_keys["authentication"].sign(data["data"]),
+            "key_type": network_author_keys["authentication"].crypto_type,
+        },
+    )
+
+    if(Cord.Identifier.identifier.is_valid_identifier(revised_rating_uri)):
+        logger.info("✅ Rating Revision(Credit) successful! 🎉")
+    else:
+        logger.info("🚫 Revision Anchoring failed!  🚫")
+
 if __name__ == "__main__":
     asyncio.run(main())
     logger.info("Bye! 👋 👋 👋 ")
