@@ -122,8 +122,8 @@ async def main():
     logger.info("⏳ Network Rating Transaction Flow")
     logger.info("💠  Write Rating - (Genesis) Credit Entry ")
     rating_content = {
-        "entity_id":str(uuid.uuid4()),
-        "provider_id":str(uuid.uuid4()),
+        "entity_id":'0x' + uuid.uuid4().hex,
+        "provider_id":'0x' + uuid.uuid4().hex,
         "rating_type": Cord.Score.scoring.RatingTypeOf.overall,
         "count_of_txn": 100,
         "total_rating": 320
@@ -141,7 +141,7 @@ async def main():
                 "provider_did": network_provider_did["uri"].replace('did:cord:', ''),
                 "total_encoded_rating": round(total_rating * 10)
         },
-        "message_id": str(uuid.uuid4()),
+        "message_id": '0x' + uuid.uuid4().hex,
         "entry_digest": entry_digest,
     }
 
@@ -181,7 +181,7 @@ async def main():
     logger.info(Fore.GREEN + pformat(revoke_input) + Style.RESET_ALL)
 
     # msg_id can be decided by application
-    msg_id = f'msg-{str(uuid.uuid4())}'
+    msg_id = f'msg-0x{uuid.uuid4().hex}'
     transaction_time = datetime.now(timezone.utc).isoformat()
 
     # this is used for digest, but its again eco-system policy
@@ -249,7 +249,7 @@ async def main():
             "reference_id": revoked_rating_uri,
             "total_encoded_rating": round(revised_rating_content["total_rating"] * 10)
         },
-        "message_id": str(uuid.uuid4()),
+        "message_id": '0x' + uuid.uuid4().hex,
         "reference_id": revoked_rating_uri,
         "entry_digest": revised_entry_digest
     }
@@ -281,6 +281,11 @@ async def main():
         logger.info("✅ Rating Revision(Credit) successful! 🎉")
     else:
         logger.info("🚫 Revision Anchoring failed!  🚫")
+
+    logger.info("🌐  Query From Chain - Rating Entry ")
+    rating_entry_from_chain = await Cord.Score.scoring_chain.fetch_rating_details_from_chain(revised_rating_uri,'Asia/Kolkata')
+    logger.info(Fore.GREEN + pformat(rating_entry_from_chain) + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -2,7 +2,7 @@ from packages.utils.src.SDKErrors import Errors
 from packages.sdk.src import ConfigService, Did, Utils
 from packages.identifier.src.identifier import (
     uri_to_identifier,
-    hash_to_uri,
+    identifier_to_uri,
 )
 import json
 
@@ -205,4 +205,91 @@ async def dispatch_revise_rating_to_chain(
         error_message = (
             str(error) if isinstance(error, Exception) else json.dumps(error)
         )
-        raise CordDispatchError(f'Error dispatching to chain: "{error_message}".')
+        raise Errors.CordDispatchError(
+            f'Error dispatching to chain: "{error_message}".'
+        )
+    
+
+def decode_rating_value(encoded_rating, mod = 10):
+    return encoded_rating / mod
+
+def decode_entry_details_from_chain(
+    encoded,
+    stmt_uri,
+    time_zone = 'GMT'
+):
+    """
+    Decodes detailed information of a rating entry from its encoded blockchain representation.
+
+    This function translates the encoded rating entry data retrieved from the blockchain
+    into a more readable and structured format. It extracts various pieces
+    of information from the encoded entry, such as entity UID, provider UID, and rating type,
+    and decodes them using utility functions. It also handles conditional data like reference IDs
+    and converts timestamps into a readable datetime format based on the specified timezone.
+
+    :param encoded: The encoded rating entry data as retrieved from the blockchain.
+    :param stmt_uri: The URI of the statement associated with the rating entry.
+    :param time_zone: The timezone to use for converting timestamp data (default is 'GMT').
+
+    :return: The decoded rating entry details in a structured format.
+    """
+
+    chain_entry = encoded.value
+    encoded_entry = chain_entry["entry"]
+
+    decoded_entry = {
+        'entity_id': encoded_entry["entity_id"],
+        'provider_id': encoded_entry["provider_id"],
+        'rating_type': encoded_entry["rating_type"],
+        'count_of_txn': encoded_entry["count_of_txn"],
+        'total_rating': decode_rating_value(encoded_entry["total_encoded_rating"])
+    }
+
+    reference_id = None
+    if chain_entry["reference_id"] is not None:
+        reference_id = identifier_to_uri(chain_entry["reference_id"])
+
+    decoded_details = {
+        'entry_uri': identifier_to_uri(stmt_uri),
+        'entry': decoded_entry,
+        'digest': chain_entry["digest"],
+        'message_id': chain_entry["message_id"],
+        'space': identifier_to_uri(chain_entry["space"]),
+        'creator_uri': Did.from_chain(chain_entry["creator_id"]),
+        'entry_type': chain_entry["entry_type"],
+        'reference_id': reference_id,
+        'created_at': Utils.data_utils.convert_unix_time_to_date_time(
+            chain_entry["created_at"]/1000.0,  # Convert to seconds from milliseconds
+            time_zone
+        ),
+    }
+
+    return decoded_details
+    
+
+
+async def fetch_rating_details_from_chain(rating_uri, time_zone):
+    """
+    Fetches and decodes the details of a specific rating entry from the blockchain.
+
+    This asynchronous function retrieves a rating entry from the blockchain using its URI.
+    It translates the blockchain's encoded rating entry into a more readable and structured format.
+    If the rating entry is found, it decodes the details using the `decode_entry_details_from_chain` function.
+    If the entry does not exist on the blockchain, the function returns None.
+
+    :param rating_uri: The URI of the rating entry to be fetched from the blockchain.
+    :param time_zone: The timezone to be used for date and time conversions (default is 'GMT').
+
+    :return: The decoded rating entry details or None if not found.
+    """
+
+    api = ConfigService.get("api")
+    rtng_id = uri_to_identifier(rating_uri)
+
+    chain_entry = api.query("NetworkScore", "RatingEntries", [rtng_id])
+    if chain_entry.value is None:
+        return None
+    
+    entry_details = decode_entry_details_from_chain(chain_entry, rating_uri, time_zone)
+
+    return entry_details
