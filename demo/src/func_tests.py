@@ -130,12 +130,6 @@ async def main():
     logger.info("❄️  Chain Space Creation")
     space_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
     logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
-    
-
-    # Step 3: Create a new Chain Space
-    logger.info("❄️  Chain Space Creation")
-    space_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
-    logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
 
     logger.info("\n❄️  Chain Space Properties ")
     space = await Cord.Chainspace.dispatch_to_chain(
@@ -148,49 +142,6 @@ async def main():
         },
     )
 
-    logger.info(Fore.GREEN + pformat(space) + Style.RESET_ALL)
-    logger.info("✅ Chain Space created!")
-    logger.info("❄️  Chain Space Approval ")
-
-    await Cord.Chainspace.sudo_approve_chain_space(
-        authority_author_identity, space["uri"], 1000
-    )
-    logger.info("✅ Chain Space approved!")
-
-    # Step 3.5: Subspace
-    subspace_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
-    logger.info(Fore.GREEN + pformat(subspace_properties) + Style.RESET_ALL)
-
-    subspace = await Cord.Chainspace.dispatch_subspace_create_to_chain(
-        subspace_properties,
-        issuer_did["uri"],
-        author_identity,
-        200,
-        space['uri'],
-        lambda data: {
-            "signature": issuer_keys["authentication"].sign(data["data"]),
-            "key_type": issuer_keys["authentication"].crypto_type,
-        },
-    
-    )
-    logger.info(Fore.GREEN + pformat(subspace) + Style.RESET_ALL)
-    logger.info("✅ Subspace created!")
-
-    # Step 3: Create a new Chain Space
-    logger.info("❄️  Chain Space Creation")
-    space_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
-    logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
-
-    logger.info("\n❄️  Chain Space Properties ")
-    space = await Cord.Chainspace.dispatch_to_chain(
-        space_properties,
-        issuer_did["uri"],
-        author_identity,
-        lambda data: {
-            "signature": issuer_keys["authentication"].sign(data["data"]),
-            "key_type": issuer_keys["authentication"].crypto_type,
-        },
-    )
     logger.info(Fore.GREEN + pformat(space) + Style.RESET_ALL)
     logger.info("✅ Chain Space created!")
     logger.info("❄️  Chain Space Approval ")
@@ -232,6 +183,9 @@ async def main():
 
     logger.info('❄️  SubSpace limit is updated')
 
+
+
+    
 
 if __name__ == "__main__":
     asyncio.run(main())
