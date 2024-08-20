@@ -96,6 +96,7 @@ async def main():
     )
 
     logger.info(Fore.GREEN + pformat(conforming_did_document) + Style.RESET_ALL)
+
     logger.info(f'🏦  Issuer ({issuer_did["assertion_method"][0]["type"]}): {issuer_did["uri"]}')
     conforming_did_document = Cord.Did.did_document_exporter.export_to_did_document(issuer_did,'application/json')
     logger.info(Fore.GREEN + pformat(conforming_did_document) + Style.RESET_ALL)
@@ -167,11 +168,6 @@ async def main():
     logger.info(Fore.GREEN + pformat(subspace) + Style.RESET_ALL)
     logger.info("✅ Subspace created!")
 
-    # Create Delegate One DID
-    delegate_one = await Cord.Did.create_did(author_identity)
-    delegate_one_mnemonic = delegate_one.get('mnemonic')
-    delegate_one_did = delegate_one.get('document')
-
     subspace_tx = await Cord.Chainspace.dispatch_update_tx_capacity_to_chain(
         subspace['uri'],
         issuer_did["uri"],
@@ -185,53 +181,25 @@ async def main():
 
     logger.info('❄️  SubSpace limit is updated')
 
+    # Step 4: Add Delelegate Two as Registry Delegate
+    logger.info("❄️  Space Delegate Authorization ")
+    permission = Cord.Permission.ASSERT
+    space_auth_properties = await Cord.Chainspace.build_from_authorization_properties(space["uri"],delegate_two_did["uri"],permission,issuer_did["uri"])
+    logger.info(Fore.GREEN + pformat(space_auth_properties) + Style.RESET_ALL)
 
-
-    
-
-    # Step 3: Create a new Chain Space
-    logger.info("❄️  Chain Space Creation")
-    space_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
-    logger.info(Fore.GREEN + pformat(space_properties) + Style.RESET_ALL)
-
-    logger.info("\n❄️  Chain Space Properties ")
-    space = await Cord.Chainspace.dispatch_to_chain(
-        space_properties,
-        issuer_did["uri"],
+    logger.info('❄️  Space Delegation To Chain ')
+    delegate_auth = await Cord.Chainspace.dispatch_delegate_authorization(
+        space_auth_properties,
         author_identity,
+        space['authorization'],
         lambda data: {
             "signature": issuer_keys["authentication"].sign(data["data"]),
             "key_type": issuer_keys["authentication"].crypto_type,
         },
     )
+    logger.info(Fore.GREEN + pformat(delegate_auth) + Style.RESET_ALL)
+    logger.info(f"✅ Space Authorization - {delegate_auth} - added!")
 
-    logger.info(Fore.GREEN + pformat(space) + Style.RESET_ALL)
-    logger.info("✅ Chain Space created!")
-    logger.info("❄️  Chain Space Approval ")
-
-    await Cord.Chainspace.sudo_approve_chain_space(
-        authority_author_identity, space["uri"], 1000
-    )
-    logger.info("✅ Chain Space approved!")
-
-    # Step 3.5: Subspace
-    subspace_properties = await Cord.Chainspace.build_from_properties(issuer_did["uri"])
-    logger.info(Fore.GREEN + pformat(subspace_properties) + Style.RESET_ALL)
-
-    subspace = await Cord.Chainspace.dispatch_subspace_create_to_chain(
-        subspace_properties,
-        issuer_did["uri"],
-        author_identity,
-        200,
-        space['uri'],
-        lambda data: {
-            "signature": issuer_keys["authentication"].sign(data["data"]),
-            "key_type": issuer_keys["authentication"].crypto_type,
-        },
-    
-    )
-    logger.info(Fore.GREEN + pformat(subspace) + Style.RESET_ALL)
-    logger.info("✅ Subspace created!")
 
 if __name__ == "__main__":
     asyncio.run(main())
