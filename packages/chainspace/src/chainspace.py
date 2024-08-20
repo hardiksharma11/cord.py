@@ -13,6 +13,7 @@ from .chainspace_chain import (
 
 
 async def build_from_properties(creator_uri, chain_space_desc=None):
+
     """
     Creates a new ChainSpace object in the CORD blockchain.
 

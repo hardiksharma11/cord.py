@@ -96,6 +96,7 @@ class AuthorizationMissingError(SDKError):
 
 class CordFetchError(SDKError):
     pass
+
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
