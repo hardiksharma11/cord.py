@@ -13,7 +13,6 @@ from packages.sdk.src import Did
 from packages.utils.src.permissions import Permission
 
 
-
 async def get_uri_for_space(space_digest, creator_uri):
     """
     Generates unique URIs for a ChainSpace and its associated authorization.
@@ -353,3 +352,130 @@ async def dispatch_delegate_authorization(request, author_account, authorization
     except Exception as error:
         raise Errors.CordDispatchError(f'Error dispatching delegate authorization: {error}')
 
+
+def decode_space_details_from_chain(encoded, space_uri):
+    """
+    Decodes the details of a space from its blockchain-encoded representation.
+
+    This internal function is pivotal for converting blockchain-specific encoded data into a structured
+    format that aligns with the `ISpaceDetails` interface. It is used to interpret and transform data
+    stored on the blockchain into a format that is more accessible and meaningful for application use.
+
+    :param encoded: The blockchain-encoded representation of space details. This data is typically
+                    stored in a format specific to the blockchain and requires decoding to be used in applications.
+    :param space_uri: The unique identifier (URI) of the space. This URI helps in identifying the correct
+                      space record on the blockchain for which details are to be decoded.
+    :returns: An `ISpaceDetails` object containing the decoded space details, including the space URI,
+              creator's DID, transaction capacity, transaction usage, approval status, and archival status.
+              This structured format simplifies interaction with space data within the application context.
+    """
+
+    chain_statement = encoded.value
+    decoded_details = {
+        "uri": space_uri,
+        "creator_uri": Did.from_chain(chain_statement['creator']),
+        "txn_capacity": chain_statement['txn_capacity'],
+        "txn_usage": chain_statement['txn_count'],
+        "approved": chain_statement['approved'],
+        "archive": chain_statement['archive'],
+    }
+   
+    return decoded_details
+
+
+async def fetch_from_chain(space_uri: str):
+    """
+    Fetches space details from the blockchain based on a given space URI.
+
+    This function queries the CORD blockchain to retrieve details about a specific space, identified by the `spaceUri`.
+    It decodes the blockchain data into a more accessible format. If the space details are not found or cannot be decoded,
+    the function throws an error.
+
+    :param space_uri: The unique identifier (URI) of the space to be fetched.
+    :returns: A promise that resolves to the space details if found. The details include information such as
+              the space URI, creator DID, transaction capacity, and other relevant data.
+    :throws: SDKErrors.ChainSpaceMissingError - Thrown when no space is found with the provided URI.
+             SDKErrors.CordFetchError - Thrown when an error occurs during the fetching process.
+
+    """
+    try:
+        api = ConfigService.get("api")
+        space_id = uri_to_identifier(space_uri)
+
+        space_entry = api.query('ChainSpace', 'Spaces', [space_id])
+        space_details = decode_space_details_from_chain(space_entry, space_uri)
+
+        if space_details is None:
+            raise Errors.ChainSpaceMissingError(
+                f'There is no chain space with the provided ID "{space_uri}" present on the chain.'
+            )
+
+        return space_details
+    except Exception as error:
+        raise Errors.CordDispatchError(
+            f'Error occurred while fetching from the chain: {error}'
+        )
+    
+def decode_authorization_details_from_chain(encoded, authorization_uri):
+    """
+    Decodes the details of a space authorization from its blockchain representation.
+
+    This internal function is crucial for translating blockchain-specific encoded data of space authorizations into
+    a more user-friendly and application-oriented format. It adheres to the `ISpaceAuthorization` interface, which
+    facilitates easier interaction with authorization data within applications. This process involves unwrapping the
+    encoded data and reformatting it into a structured object.
+
+    :param encoded: The encoded authorization details retrieved from the blockchain, typically in a format unique
+                    to the blockchain that requires decoding for application use.
+    :param authorization_uri: The unique identifier for the authorization being decoded. This ID is essential for
+                              pinpointing the correct authorization record on the blockchain.
+    :returns: Dictionary containing the decoded details of the space authorization. This object
+              includes information such as the space URI, delegate DID, permissions granted, authorization ID, and
+              delegator DID. The structured format of this object is tailored for easy integration and use within
+              application workflows.
+    """
+
+    chain_auth = encoded.value
+    decoded_details = {
+        "uri": identifier_to_uri(chain_auth['space_id']),
+        "delegate_uri": Did.from_chain(chain_auth['delegate']),
+        "permission": chain_auth['permissions']['bits'],
+        "authorization_uri": authorization_uri,
+        "delegator_uri": Did.from_chain(chain_auth['delegator']),
+    }
+    
+    return decoded_details
+
+
+async def fetch_authorization_from_chain(authorization_uri):
+    """
+    Fetches authorization details from the CORD chain based on a given authorization ID.
+
+    This function queries the CORD blockchain to retrieve details about a specific authorization, using the provided
+    authorization URI. It is designed to fetch and decode the authorization details stored on the blockchain. If the
+    authorization details are not found or cannot be decoded, the function throws an error.
+
+    :param authorization_uri: The unique identifier (URI) of the authorization to be fetched.
+    :returns: A promise that resolves to the authorization details if found. Includes information such as the space ID, delegate DID, permissions,
+              authorization ID, and delegator DID. The function returns `null` if the authorization details are not found
+              or cannot be decoded.
+    :throws: SDKErrors.AuthorizationMissingError - Thrown when no authorization is found with the provided ID.
+             SDKErrors.CordFetchError - Thrown when an error occurs during the fetching process, such as issues with
+             network connectivity or problems querying the blockchain.
+    """
+    try:
+        api = ConfigService.get("api")
+        auth_id = uri_to_identifier(authorization_uri)
+        auth_entry = api.query('ChainSpace', 'Authorizations', [auth_id])
+        auth_details = decode_authorization_details_from_chain(auth_entry, authorization_uri)
+
+        if auth_details is None:
+            raise Errors.AuthorizationMissingError(
+                f'There is no authorization with the provided ID "{authorization_uri}" present on the chain.'
+            )
+
+        return auth_details
+    except Exception as error:
+        raise Errors.CordFetchError(
+            f'Error occurred while fetching authorization: {error}'
+        )

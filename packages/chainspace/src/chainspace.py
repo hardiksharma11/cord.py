@@ -7,7 +7,10 @@ from .chainspace_chain import (
     dispatch_subspace_create_to_chain,
     dispatch_update_tx_capacity_to_chain,
     dispatch_delegate_authorization,
+    fetch_from_chain,
+    fetch_authorization_from_chain
 )
+
 
 async def build_from_properties(creator_uri, chain_space_desc=None):
 
@@ -55,7 +58,7 @@ async def build_from_authorization_properties(
     :param delegate_uri: The decentralized identifier (DID) URI of the delegate, the entity being authorized.
     :param permission: The type of permission being granted to the delegate, defining their role and actions within the ChainSpace.
     :param creator_uri: The DID URI of the ChainSpace's creator or owner, responsible for authorizing the delegate.
-    :returns: A promise that resolves to an ISpaceAuthorization object, encapsulating the details of the granted authorization.
+    :returns: A dictionary, encapsulating the details of the granted authorization.
 
     """
     authorization_uri = await get_uri_for_authorization(
