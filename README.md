@@ -19,20 +19,28 @@ Before you begin, ensure that you have the following:
      pip3 --version
      ```
 
-   - If pip is not installed, you can install it by following these steps:
+3. Make sure you have python installed. You can download it from [here](https://www.python.org/downloads/). After that install setuptools using:
      ```bash
-     sudo apt install python3-pip
-     ```
+     pip install setuptools
 
-3. **Setuptools**:
+4. Install dependencies and setup modules using setup.py :
+
+
+5. **Setuptools**:
    - Setuptools is required to manage the installation of Python packages. First, check if it is already installed:
      ```bash
      pip show setuptools
      ```
    - If it is not installed, you can install it using:
      ```bash
-     pip3 install setuptools
-     ```
+     python setup.py install
+
+## Required Dependencies
+- substrate-interface
+- base58
+- mnemonic
+- pynacl
+
 
 ## Building the SDK
 
