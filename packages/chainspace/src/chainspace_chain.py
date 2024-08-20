@@ -185,3 +185,47 @@ async def dispatch_subspace_create_to_chain(chain_space, creator_uri, author_acc
     except Exception as error:
         raise Errors.CordDispatchError(f"Error dispatching to chain: \"{error}\".")
         
+async def dispatch_update_tx_capacity_to_chain(space, creator_uri, author_account, new_capacity, sign_callback):
+    """
+    Dispatches a Sub-ChainSpace update transaction capacity to the CORD blockchain.
+
+    Responsible for updating the transaction capacity of a ChainSpace on the blockchain. It first constructs and submits a transaction to update the ChainSpace. The transaction requires authorization from the creator and is signed by the specified author account.
+
+    :param space: The Space URI of the ChainSpace to be updated.
+    :param creator_uri: The DID URI of the creator, used to authorize the transaction.
+    :param author_account: The blockchain account used for signing and submitting the transaction.
+    :param new_capacity: The new capacity to be set for the ChainSpace.
+    :param sign_callback: The callback function for signing the transaction.
+    :returns: A promise resolving to an object containing the ChainSpace URI.
+    :raises SDKErrors.CordDispatchError: Thrown when there's an error during the dispatch process.
+    """
+    return_object = {
+        'uri': space
+    }
+
+    try:
+        api = ConfigService.get('api')
+
+        tx = api.compose_call(
+            call_module='ChainSpace',
+            call_function='update_transaction_capacity_sub',
+            call_params={
+                'space_id': space.replace('space:cord:', ''),
+                'new_txn_capacity': new_capacity
+            }
+        )
+
+        extrinsic = await Did.authorize_tx(
+            creator_uri,
+            tx,
+            sign_callback,
+            author_account.ss58_address
+        )
+
+        extrinsic = api.create_signed_extrinsic(extrinsic, keypair = author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion = True)
+
+        return return_object
+    except Exception as error:
+        raise Errors.CordDispatchError(f"Error dispatching to chain: \"{error}\".")
+        
