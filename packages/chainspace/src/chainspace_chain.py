@@ -184,3 +184,4 @@ async def dispatch_subspace_create_to_chain(chain_space, creator_uri, author_acc
         return return_object
     except Exception as error:
         raise Errors.CordDispatchError(f"Error dispatching to chain: \"{error}\".")
+        
