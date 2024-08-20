@@ -13,6 +13,7 @@ from packages.sdk.src import Did
 from packages.utils.src.permissions import Permission
 
 
+
 async def get_uri_for_space(space_digest, creator_uri):
     """
     Generates unique URIs for a ChainSpace and its associated authorization.

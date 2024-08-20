@@ -200,9 +200,9 @@ async def get_store_tx(input, submitter, sign_callback):
         "new_key_agreement_keys": new_key_agreement_keys,
         "new_service_details": new_service_details,
     }
-
-    encoded = api.encode_scale(type_string="scale_info::217", value=api_input)
-
+    
+    encoded = api.encode_scale(type_string='pallet_did::did_details::DidCreationDetails<sp_core::crypto::AccountId32, sp_core::crypto::AccountId32, cord_loom_runtime::MaxNewKeyAgreementKeys, pallet_did::service_endpoints::DidEndpoint<T>>',value=api_input)
+    
     signature = sign_callback(encoded)
     encoded_signature = {signature["key_type"]: "0x" + signature["signature"].hex()}
 

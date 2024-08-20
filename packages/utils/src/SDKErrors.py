@@ -87,6 +87,7 @@ class CordDispatchError(SDKError):
 
 class InvalidPermissionError(SDKError):
     pass
+
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -102,3 +103,4 @@ class Errors:
     DidExporterError = DidExporterError
     CordDispatchError = CordDispatchError
     InvalidPermissionError = InvalidPermissionError
+
