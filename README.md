@@ -19,6 +19,40 @@ Before you begin, ensure that you have the following:
      pip3 --version
      ```
 
+   - If pip is not installed, you can install it by following these steps:
+     ```bash
+     sudo apt install python3-pip
+     ```
+
+3. **Setuptools**:
+   - Setuptools is required to manage the installation of Python packages. First, check if it is already installed:
+     ```bash
+     pip show setuptools
+     ```
+   - If it is not installed, you can install it using:
+     ```bash
+     pip3 install setuptools
+     ```
+
+## Building the SDK
+
+Before you begin, ensure that you have the following:
+
+1. **Python 3.10 or higher**:
+   - CORD.py requires Python version 3.10 or higher. You can check your Python version by running:
+     ```bash
+     python3 --version
+     ```
+
+   - If you do not have Python installed, you can download it from the [official Python website](https://www.python.org/downloads/).
+
+2. **pip**:
+   - pip is the package installer for Python. It is usually included with Python, but you can verify its installation with:
+     ```bash
+     pip3 --version
+     ```
+
+
 3. Make sure you have python installed. You can download it from [here](https://www.python.org/downloads/). After that install setuptools using:
      ```bash
      pip install setuptools
@@ -34,6 +68,7 @@ Before you begin, ensure that you have the following:
    - If it is not installed, you can install it using:
      ```bash
      python setup.py install
+
 
 ## Required Dependencies
 - substrate-interface
