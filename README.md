@@ -36,6 +36,49 @@ Before you begin, ensure that you have the following:
 
 ## Building the SDK
 
+Before you begin, ensure that you have the following:
+
+1. **Python 3.10 or higher**:
+   - CORD.py requires Python version 3.10 or higher. You can check your Python version by running:
+     ```bash
+     python3 --version
+     ```
+
+   - If you do not have Python installed, you can download it from the [official Python website](https://www.python.org/downloads/).
+
+2. **pip**:
+   - pip is the package installer for Python. It is usually included with Python, but you can verify its installation with:
+     ```bash
+     pip3 --version
+     ```
+
+
+3. Make sure you have python installed. You can download it from [here](https://www.python.org/downloads/). After that install setuptools using:
+     ```bash
+     pip install setuptools
+
+4. Install dependencies and setup modules using setup.py :
+
+
+5. **Setuptools**:
+   - Setuptools is required to manage the installation of Python packages. First, check if it is already installed:
+     ```bash
+     pip show setuptools
+     ```
+   - If it is not installed, you can install it using:
+     ```bash
+     python setup.py install
+
+
+## Required Dependencies
+- substrate-interface
+- base58
+- mnemonic
+- pynacl
+
+
+## Building the SDK
+
 To build the SDK and see changes, follow these steps:
 
 1. **Clone the repository**:
@@ -50,16 +93,7 @@ To build the SDK and see changes, follow these steps:
      ```bash
      python3 setup.py install
      ```
-
-## Required Dependencies
-
-CORD.py relies on several Python libraries. These dependencies will be installed when you run the `setup.py` script:
-
-- [substrate-interface](https://polkascan.github.io/py-substrate-interface/)
-- [base58](https://pypi.org/project/base58/)
-- [mnemonic](https://pypi.org/project/mnemonic/)
-- [pynacl](https://pypi.org/project/PyNaCl/)
-
+     
 ## Experimenting with SDK Methods
 
 After building the SDK, you can experiment with the provided methods.
