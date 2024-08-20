@@ -1,7 +1,7 @@
 import uuid
 from packages.utils.src.crypto_utils import blake2_as_hex
 from .chainspace_chain import get_uri_for_space
-from .chainspace_chain import sudo_approve_chain_space, dispatch_to_chain
+from .chainspace_chain import sudo_approve_chain_space, dispatch_to_chain, dispatch_subspace_create_to_chain
 
 async def build_from_properties(creator_uri, chain_space_desc = None):
     """
