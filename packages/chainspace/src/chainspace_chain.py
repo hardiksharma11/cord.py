@@ -184,8 +184,7 @@ async def dispatch_subspace_create_to_chain(chain_space, creator_uri, author_acc
         return return_object
     except Exception as error:
         raise Errors.CordDispatchError(f"Error dispatching to chain: \"{error}\".")
-
-
+        
 async def dispatch_update_tx_capacity_to_chain(space, creator_uri, author_account, new_capacity, sign_callback):
     """
     Dispatches a Sub-ChainSpace update transaction capacity to the CORD blockchain.
@@ -229,3 +228,4 @@ async def dispatch_update_tx_capacity_to_chain(space, creator_uri, author_accoun
         return return_object
     except Exception as error:
         raise Errors.CordDispatchError(f"Error dispatching to chain: \"{error}\".")
+        
