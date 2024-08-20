@@ -50,16 +50,7 @@ To build the SDK and see changes, follow these steps:
      ```bash
      python3 setup.py install
      ```
-
-## Required Dependencies
-
-CORD.py relies on several Python libraries. These dependencies will be installed when you run the `setup.py` script:
-
-- [substrate-interface](https://polkascan.github.io/py-substrate-interface/)
-- [base58](https://pypi.org/project/base58/)
-- [mnemonic](https://pypi.org/project/mnemonic/)
-- [pynacl](https://pypi.org/project/PyNaCl/)
-
+     
 ## Experimenting with SDK Methods
 
 After building the SDK, you can experiment with the provided methods.

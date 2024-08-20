@@ -81,6 +81,9 @@ class HashMalformedError(SDKError):
 # Exporter
 class DidExporterError(SDKError):
     pass
+
+class CordDispatchError(SDKError):
+    pass
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -94,3 +97,4 @@ class Errors:
     AddressInvalidError = AddressInvalidError
     AddressTypeError = AddressTypeError
     DidExporterError = DidExporterError
+    CordDispatchError = CordDispatchError
