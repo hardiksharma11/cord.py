@@ -110,6 +110,7 @@ class SchemaIdMismatchError(SDKError):
 
 class SchemaError(SDKError):
     pass
+
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
