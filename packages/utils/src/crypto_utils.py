@@ -4,6 +4,9 @@ import hashlib
 import base58
 import nacl.utils
 from nacl.public import PrivateKey
+from collections import OrderedDict
+import json
+import unicodedata
 
 #generate mnemonic function
 def generate_mnemonic(size=24):
@@ -131,3 +134,18 @@ def hash(value,bit_length = 32):
 
 def hash_str(value,bit_length = 32):
     return u8a_to_hex(hash(value, bit_length))
+
+def encode_object_as_str(value):
+    if isinstance(value, dict):
+        # Sort the dictionary by keys using OrderedDict
+        sorted_value = OrderedDict(sorted(value.items()))
+        input_str = json.dumps(sorted_value, ensure_ascii=False)
+    elif isinstance(value, (int, bool)):
+        input_str = json.dumps(value)
+    else:
+        input_str = value
+    
+    # Normalize the string to NFC form
+    normalized_str = unicodedata.normalize('NFC', input_str)
+    
+    return normalized_str
