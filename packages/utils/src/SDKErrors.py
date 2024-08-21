@@ -142,4 +142,5 @@ class Errors:
     SchemaError = SchemaError
     StatementHashMissingError = StatementHashMissingError
     HashMalformedError = HashMalformedError
+<<<<<< statement-dispatch_register_to_chain
     DuplicateStatementError = DuplicateStatementError
