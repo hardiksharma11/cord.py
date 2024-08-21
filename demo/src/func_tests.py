@@ -243,9 +243,18 @@ async def main():
 
     new_cred_content['issuanceDate'] = datetime.now(timezone.utc).isoformat()
     serialized_cred = Cord.Utils.crypto_utils.encode_object_as_str(new_cred_content)
-    cred_hash = Cord.Utils.crypto_utils.hash_str(serialized_cred.encode('utf-8'))
+    cred_hash ='0x'+ Cord.Utils.crypto_utils.hash_str(serialized_cred.encode('utf-8'))
 
     logger.info(Fore.GREEN + pformat(new_cred_content) + Style.RESET_ALL)
+
+    statement_entry = Cord.Statement.statement.build_from_properties(
+        cred_hash,
+        space['uri'],
+        issuer_did['uri'],
+        schema_uri
+    )
+    logger.info(Fore.GREEN + pformat(statement_entry) + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
