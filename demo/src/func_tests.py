@@ -218,5 +218,17 @@ async def main():
     schema_properties = Cord.Schema.schema.build_from_properties(new_schema_content,space['uri'],issuer_did['uri'])
     logger.info(Fore.GREEN + pformat(schema_properties) + Style.RESET_ALL)
 
+    schema_uri = await Cord.Schema.schema_chain.dispatch_to_chain(
+        schema_properties["schema"],
+        issuer_did["uri"],
+        author_identity,
+        space["authorization"],
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        },
+    )
+    logger.info(f"✅ Schema - {schema_uri} - added!")
+
 if __name__ == "__main__":
     asyncio.run(main())
