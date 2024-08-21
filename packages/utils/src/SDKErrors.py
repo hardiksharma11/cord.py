@@ -96,6 +96,17 @@ class AuthorizationMissingError(SDKError):
 
 class CordFetchError(SDKError):
     pass
+    
+class SchemaStructureError(SDKError):
+    pass
+
+class ObjectUnverifiableError(SDKError):
+    pass
+
+class SchemaIdMismatchError(SDKError):
+    def __init__(self, from_schema, provided, options: dict = None):
+        message = f"Provided $id {provided} does not match schema $id {from_schema}"
+        super().__init__(message, options)
 
 class Errors:
     SDKError = SDKError
@@ -115,3 +126,6 @@ class Errors:
     ChainSpaceMissingError = ChainSpaceMissingError
     AuthorizationMissingError = AuthorizationMissingError
     CordFetchError = CordFetchError
+    SchemaStructureError = SchemaStructureError
+    ObjectUnverifiableError = ObjectUnverifiableError
+    SchemaIdMismatchError = SchemaIdMismatchError

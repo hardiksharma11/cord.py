@@ -124,3 +124,10 @@ def make_encryption_keypair_from_seed(seed = None):
         **keypair,
         'crypto_type': 'X25519'
     }
+
+def hash(value,bit_length = 32):
+    return  blake2_as_u8a(value, bit_length)
+
+
+def hash_str(value,bit_length = 32):
+    return u8a_to_hex(hash(value, bit_length))
