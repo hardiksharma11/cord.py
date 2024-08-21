@@ -462,6 +462,6 @@ def get_key_relationship_for_method(call):
     signature = f"{section}.{method}"
     if signature in method_mapping:
         return method_mapping[signature]
+
     
     return method_mapping[f"{section}"]
-

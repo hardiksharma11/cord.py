@@ -108,6 +108,9 @@ class SchemaIdMismatchError(SDKError):
         message = f"Provided $id {provided} does not match schema $id {from_schema}"
         super().__init__(message, options)
 
+class SchemaError(SDKError):
+    pass
+
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -129,3 +132,4 @@ class Errors:
     SchemaStructureError = SchemaStructureError
     ObjectUnverifiableError = ObjectUnverifiableError
     SchemaIdMismatchError = SchemaIdMismatchError
+    SchemaError = SchemaError
