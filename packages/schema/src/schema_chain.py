@@ -243,4 +243,4 @@ async def fetch_from_chain(schema_uri):
         print('Error fetching schema from chain:', error)
         raise Errors.CordFetchError(
             f'Error occurred while fetching schema from chain: {error}'
-        ) 
+        )
