@@ -123,7 +123,7 @@ async def main():
     logger.info("💠  Write Rating - (Genesis) Credit Entry ")
     rating_content = {
         "entity_id":str(uuid.uuid4()),
-        "provide_id":str(uuid.uuid4()),
+        "provider_id":str(uuid.uuid4()),
         "rating_type": Cord.Score.scoring.RatingTypeOf.overall,
         "count_of_txn": 100,
         "total_rating": 320
@@ -139,7 +139,7 @@ async def main():
         "entry": {
                 **rest_of_rating,
                 "provider_did": network_provider_did["uri"].replace('did:cord:', ''),
-                "total_encoding_rating": round(total_rating * 10)
+                "total_encoded_rating": round(total_rating * 10)
         },
         "message_id": str(uuid.uuid4()),
         "entry_digest": entry_digest,
@@ -157,7 +157,79 @@ async def main():
     logger.info("🌐  Rating Information to Ledger (API -> Ledger) ")
     logger.info(Fore.GREEN + pformat(dispatch_entry) + Style.RESET_ALL)
 
+    rating_uri = await Cord.Score.scoring_chain.dispatch_rating_to_chain(
+        dispatch_entry["details"],
+        network_author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": network_author_keys["authentication"].sign(data["data"]),
+            "key_type": network_author_keys["authentication"].crypto_type,
+        },
+    )
 
+    if(Cord.Identifier.identifier.is_valid_identifier(rating_uri)):
+        logger.info("✅ Rating addition successful! 🎉")
+    else:
+        logger.info("🚫 Ledger Anchoring failed! 🚫")
+
+    logger.info("💠  Revoke Rating - Debit Entry ")
+    revoke_input = {
+        "entry_uri": rating_uri,
+        "entity_id": transformed_entry["entry"]["entity_id"],
+    }
+
+    logger.info(Fore.GREEN + pformat(revoke_input) + Style.RESET_ALL)
+
+    # msg_id can be decided by application
+    msg_id = f'msg-{str(uuid.uuid4())}'
+    transaction_time = datetime.now(timezone.utc).isoformat()
+
+    # this is used for digest, but its again eco-system policy
+    entry_transform = {
+        "entry_uri": rating_uri,
+        "msg_id": msg_id,
+        "provider": network_provider_did["uri"],
+        "transaction_time": transaction_time,
+    }
+
+    revoke_digest = Cord.Utils.crypto_utils.hash_object_as_hex_string(entry_transform)
+
+    revoke_rating_entry = {
+        "entry":{
+            "message_id": msg_id,
+            "entry_digest": revoke_digest,
+            "reference_id": rating_uri
+        },
+        "entity_id": transformed_entry["entry"]["entity_id"],
+        "provider_did": network_provider_did["uri"]
+    }
+
+    logger.info("🌐  Rating Revoke (Debit) Information to API endpoint (/amend-ratings)")
+    logger.info(Fore.GREEN + pformat(revoke_rating_entry) + Style.RESET_ALL)
+
+    revoke_rating_dispatch_entry = await Cord.Score.scoring.build_from_revoke_rating_properties(
+        revoke_rating_entry,
+        chain_space["uri"],
+        network_author_did["uri"]
+    )
+
+    logger.info("🌐  Rating Revoke (Debit) Information to Ledger (API -> Ledger)")
+    logger.info(Fore.GREEN + pformat(revoke_rating_dispatch_entry) + Style.RESET_ALL)
+
+    revoked_rating_uri = await Cord.Score.scoring_chain.dispatch_revoke_rating_to_chain(
+        revoke_rating_dispatch_entry["details"],
+        network_author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": network_author_keys["authentication"].sign(data["data"]),
+            "key_type": network_author_keys["authentication"].crypto_type,
+        },
+    )
+
+    if(Cord.Identifier.identifier.is_valid_identifier(revoked_rating_uri)):
+        logger.info("✅ Rating Revoke (Debit) successful! 🎉")
+    else:
+        logger.info("🚫 Debit Anchoring failed!  🚫")
 
 if __name__ == "__main__":
     asyncio.run(main())

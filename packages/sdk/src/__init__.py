@@ -8,4 +8,5 @@ import packages.schema.src as Schema
 import packages.statement.src as Statement
 import packages.asset.src as Asset
 import packages.network_score.src as Score
+import packages.identifier.src as Identifier
 

@@ -124,6 +124,9 @@ class StatementError(SDKError):
 
 class RatingPropertiesError(SDKError):
     pass
+
+class CordQueryError(SDKError):
+    pass
 class Errors:
     SDKError = SDKError
     SubscriptionsNotSupportedError = SubscriptionsNotSupportedError
@@ -151,3 +154,4 @@ class Errors:
     DuplicateStatementError = DuplicateStatementError
     StatementError = StatementError
     RatingPropertiesError = RatingPropertiesError
+    CordQueryError = CordQueryError
