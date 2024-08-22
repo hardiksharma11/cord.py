@@ -108,6 +108,17 @@ async def main():
     logger.info("❄️  Asset Transaction  - Created by Issuer  ")
     logger.info(Fore.GREEN + pformat(asset_entry) + Style.RESET_ALL)
 
+    extrinsic  =await Cord.Asset.asset_chain.dispatch_create_to_chain(
+        asset_entry,
+        network_authority_identity,
+        space["authorization"],
+        lambda data: {
+            "signature": issuer_keys["authentication"].sign(data["data"]),
+            "key_type": issuer_keys["authentication"].crypto_type,
+        },
+    )
+
+    logger.info("✅ Asset created!")
 
 if __name__ == "__main__":
     asyncio.run(main())
