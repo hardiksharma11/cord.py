@@ -89,3 +89,26 @@ To run the statement demo, execute the following command:
 
 ```bash
 python3 -u "demo/src/func_tests.py"
+```
+
+### Network Score Method:
+
+The `network-score-tests` method demonstrates methods related to network scores.
+
+To run the network score demo, execute the following command:
+
+```bash
+python3 -u "demo/src/network-score-tests.py"
+```
+
+## Asset Method:
+
+The `asset-tx` method showcases methods related to assets.
+
+To run the asset demo, execute the following command:
+
+```bash
+python3 -u "demo/src/asset-tx.py"
+```
+
+The output of each demo script will demonstrate the functionality of the corresponding method. For a detailed structure of the demo scripts, refer to the source code.
