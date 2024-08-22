@@ -6,4 +6,5 @@ from packages.chainspace.src import chainspace as Chainspace
 from packages.utils.src.permissions import Permission
 import packages.schema.src as Schema
 import packages.statement.src as Statement
+import packages.asset.src as Asset
 
