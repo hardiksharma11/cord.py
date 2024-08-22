@@ -286,6 +286,14 @@ async def main():
     rating_entry_from_chain = await Cord.Score.scoring_chain.fetch_rating_details_from_chain(revised_rating_uri,'Asia/Kolkata')
     logger.info(Fore.GREEN + pformat(rating_entry_from_chain) + Style.RESET_ALL)
 
+    logger.info("🌐  Query From Chain - Aggregate Score ")
+    aggregate_score_from_chain = await Cord.Score.scoring_chain.fetch_entity_aggregate_score_from_chain(rating_content["entity_id"],Cord.Score.scoring.RatingTypeOf.overall)
+    logger.info(Fore.GREEN + pformat(aggregate_score_from_chain) + Style.RESET_ALL)
+
+    logger.info("🌐  Query From Chain - Chain Space Usage ")
+    space_usage_from_chain = await Cord.Chainspace.fetch_from_chain(chain_space['uri'])
+    logger.info(Fore.GREEN + pformat(space_usage_from_chain) + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

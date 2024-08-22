@@ -293,3 +293,63 @@ async def fetch_rating_details_from_chain(rating_uri, time_zone):
     entry_details = decode_entry_details_from_chain(chain_entry, rating_uri, time_zone)
 
     return entry_details
+
+
+async def fetch_entity_aggregate_score_from_chain(
+    entity,
+    rating_type = None
+):
+    """
+    Fetches and aggregates scores for a specific entity from the blockchain.
+
+    This asynchronous function retrieves aggregate score data for a given entity from the blockchain.
+    If a specific rating type is provided, it fetches the aggregate score for that rating type. Otherwise,
+    it fetches aggregate scores across all rating types. The function decodes the retrieved data into a readable
+    and structured format. This function is crucial for analyzing and presenting an overview of how an entity is 
+    rated across different parameters or overall.
+
+    Args:
+        entity (str): The identifier of the entity for which aggregate scores are to be fetched.
+        rating_type (Optional[str]): (Optional) The specific rating type to fetch the aggregate score for.
+
+    Returns:
+        A list of aggregate score objects, or None if no data is found.
+
+    Example:
+        entity_id = 'entity123'
+        rating_type = 'overall'
+        
+        aggregate_scores = await fetch_entity_aggregate_score_from_chain(entity_id, rating_type)
+        if aggregate_scores:
+            print('Aggregate Scores:', aggregate_scores)
+        else:
+            print('No aggregate scores found for the specified entity and rating type.')
+    """
+    api = ConfigService.get('api')
+    decoded_entries = []
+
+    if rating_type is not None:
+        specific_item = api.query("NetworkScore", "AggregateScores", [entity, rating_type])
+        if specific_item.value is not None:
+            value = specific_item.value
+            decoded_entries.append({
+                'entity_id': entity,
+                'rating_type': rating_type,
+                'count_of_txn': value["count_of_txn"],
+                'total_rating': decode_rating_value(value["total_encoded_rating"])
+            })
+    else:
+        entries = api.query_map("NetworkScore", "AggregateScores", [entity])
+    
+        for composite_key, option_value in entries:
+            if option_value.value is not None:
+                value = option_value.value
+                
+                decoded_entries.append({
+                    'entity_id': entity,
+                    'rating_type': composite_key.value,
+                    'count_of_txn': value["count_of_txn"],
+                    'total_rating': decode_rating_value(value["total_encoded_rating"])
+                })
+
+    return decoded_entries if decoded_entries else None
