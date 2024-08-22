@@ -396,3 +396,106 @@ async def fetch_statement_details_from_chain(stmt_uri):
     }
 
     return statement_status
+
+async def prepare_extrinsic_to_revoke(statement_uri, creator_uri, author_account, authorization_uri, sign_callback):
+    """
+    Dispatches a statement revocation transaction to the CORD blockchain.
+
+    This function is responsible for revoking an existing statement on the blockchain.
+    It constructs and submits a transaction to revoke the statement identified by the given URI.
+    The transaction is authorized by the creator and signed by the provided author account.
+
+    Args:
+        statement_uri (str): The URI of the statement to be revoked.
+        creator_uri (str): The DID URI of the creator of the statement. This identifier is used to authorize the transaction.
+        author_account (CordKeyringPair): The blockchain account used to sign and submit the transaction.
+        authorization_uri (str): The URI of the authorization used for the statement.
+        sign_callback (function): A callback function that handles the signing of the transaction.
+
+    Returns:
+        SubmittableExtrinsic: A promise that resolves once the transaction is successfully processed.
+
+    Raises:
+        SDKErrors.CordDispatchError: Thrown when there is an error during the dispatch process, such as issues with
+                                     constructing the transaction, signing, or submission to the blockchain.
+
+    Example:
+        statement_uri = 'stmt:cord:example_uri'
+        creator_uri = 'did:cord:creator_uri'
+        author_account = # ... initialization ...
+        authorization_uri = 'auth:cord:example_uri'
+        sign_callback = # ... implementation ...
+
+        extrinsic = await prepare_extrinsic_to_revoke(statement_uri, creator_uri, author_account, authorization_uri, sign_callback)
+        print('Extrinsic prepared:', extrinsic)
+    """
+    try:
+        api = ConfigService.get('api')
+        authorization_id = uri_to_identifier(authorization_uri)
+
+        stmt_id_digest = uri_to_statement_id_and_digest(statement_uri)
+        stmt_id = stmt_id_digest['identifier']
+
+        tx = api.compose_call(
+            call_module='Statement',
+            call_function='revoke',
+            call_params={
+                'statement_id': stmt_id,
+                'authorization': authorization_id
+            }
+        )
+
+        extrinsic = await Did.authorize_tx(
+            creator_uri,
+            tx,
+            sign_callback,
+            author_account.ss58_address
+        )
+
+        return extrinsic
+    except Exception as error:
+        raise Errors.CordDispatchError(f'Error returning extrinsic:: "{error}".')
+
+async def dispatch_revoke_to_chain(statement_uri, creator_uri, author_account, authorization_uri, sign_callback):
+    """
+    Dispatches a revocation transaction to a blockchain network after preparing
+    the necessary extrinsic data.
+
+    Args:
+        statement_uri (str): The URI of the statement that you want to revoke on the chain.
+        creator_uri (str): The URI that identifies the creator of the statement being revoked.
+        author_account (dict): A dictionary representing the account of the author who is revoking the statement.
+                               This dictionary typically contains the public key, private key, and other account
+                               information needed to sign and submit transactions.
+        authorization_uri (str): A Uniform Resource Identifier (URI) that specifies the location or identifier
+                                 of the authorization being revoked.
+        sign_callback (function): A callback function that is used to sign the extrinsic before submitting it to
+                                  the chain. This callback function typically takes care of signing the transaction
+                                  using the private key of the account associated with the author of the statement.
+
+    Raises:
+        CordDispatchError: Thrown when there is an error during the dispatch process, such as issues with
+                           constructing the transaction, signing, or submission to the blockchain.
+
+    Example:
+        statement_uri = 'stmt:cord:example_uri'
+        creator_uri = 'did:cord:creator_uri'
+        author_account = {'address': 'example_address', 'public_key': 'public_key', 'private_key': 'private_key'}
+        authorization_uri = 'auth:cord:example_uri'
+        sign_callback = lambda tx: tx  # Replace with actual sign callback
+
+        asyncio.run(dispatch_revoke_to_chain(statement_uri, creator_uri, author_account, authorization_uri, sign_callback))
+    """
+    try:
+        api = ConfigService.get('api')
+        tx = await prepare_extrinsic_to_revoke(
+            statement_uri,
+            creator_uri,
+            author_account,
+            authorization_uri,
+            sign_callback
+        )
+        extrinsic = api.create_signed_extrinsic(tx, author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
+    except Exception as error:
+        raise Errors.CordDispatchError(f'Error dispatching to chain: "{error}".')
