@@ -244,4 +244,3 @@ async def fetch_from_chain(schema_uri):
         raise Errors.CordFetchError(
             f'Error occurred while fetching schema from chain: {error}'
         )
-

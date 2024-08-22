@@ -1,9 +1,8 @@
 from packages.sdk.src import ConfigService, Did, Utils
 from packages.identifier.src.identifier import (
-    hash_to_uri,
     uri_to_identifier,
     build_statement_uri,
-    identifier_to_uri,
+    uri_to_statement_id_and_digest
 )
 from packages.utils.src.SDKErrors import Errors
 
@@ -191,3 +190,83 @@ async def dispatch_register_to_chain(stmt_entry, creator_uri, author_account, au
         return stmt_entry['element_uri']
     except Exception as error:
         raise Exception(f'Error dispatching to chain: "{error}".')
+
+
+async def dispatch_update_to_chain(
+    stmt_entry, creator_uri, author_account, authorization_uri, sign_callback
+):
+    """
+    Dispatches a statement update transaction to the CORD blockchain.
+
+    This function is used to update an existing statement on the blockchain.
+    It first checks if the statement with the given digest and space URI already exists.
+    If it does, the function constructs and submits a transaction to update the statement.
+    The transaction is authorized by the creator and signed by the provided author account.
+
+    Args:
+        stmt_entry (dict): The statement entry object containing the necessary information
+            for updating the statement on the blockchain. This includes the digest, element URI,
+            creator URI, space URI, and optionally a schema URI.
+        creator_uri (str): The DID URI of the creator of the statement. This identifier is
+            used to authorize the transaction.
+        author_account (object): The blockchain account used to sign and submit the transaction.
+        authorization_uri (str): The URI of the authorization used for the statement.
+        sign_callback (function): A callback function that handles the signing of the transaction.
+
+    Returns:
+        str: The element URI of the updated statement.
+
+    Raises:
+        CordDispatchError: Thrown when there is an error during the dispatch process,
+            such as issues with constructing the transaction, signing, or submission to the blockchain.
+
+    Example:
+        stmt_entry = {
+            # ... initialization of statement properties ...
+        }
+        creator_uri = 'did:cord:creator_uri'
+        author_account = # ... initialization ...
+        authorization_uri = 'auth:cord:example_uri'
+        sign_callback = # ... implementation ...
+
+        dispatch_update_to_chain(stmt_entry, creator_uri, author_account, authorization_uri, sign_callback)
+        .then(statement_uri => {
+            print('Statement updated with URI:', statement_uri)
+        })
+        .catch(error => {
+            print('Error dispatching statement update to chain:', error)
+        })
+    """
+    try:
+        api = ConfigService.get('api')
+        authorization_id = uri_to_identifier(authorization_uri)
+        exists = await is_statement_stored(stmt_entry['digest'], stmt_entry['space_uri'])
+
+        if exists:
+            return stmt_entry['element_uri']
+
+        stmt_id_digest = uri_to_statement_id_and_digest(stmt_entry['element_uri'])
+        
+        tx = api.compose_call(
+            call_module='Statement',
+            call_function='update',
+            call_params={
+                'statement_id': stmt_id_digest['identifier'],
+                'new_statement_digest': stmt_entry['digest'],
+                'authorization': authorization_id
+            }
+        )
+
+        extrinsic = await Did.authorize_tx(
+            creator_uri,
+            tx,
+            sign_callback,
+            author_account.ss58_address
+        )
+
+        extrinsic = api.create_signed_extrinsic(extrinsic, author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
+
+        return stmt_entry['element_uri']
+    except Exception as error:
+        raise Errors.CordDispatchError(f'Error dispatching to chain: "{error}".')
