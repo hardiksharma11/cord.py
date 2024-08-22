@@ -30,7 +30,7 @@
                         ],
                         [
                             "service_endpoints",
-                            "Vec<scale_info::219>"
+                            "Vec<pallet_did::service_endpoints::DidEndpoint<T>>"
                         ],
                         [
                             "details",
