@@ -6,6 +6,7 @@ from packages.identifier.src.identifier import (
 )
 import json
 
+
 async def is_rating_stored(rating_uri: str) -> bool:
     """
     Checks if a specific rating is stored in the blockchain.
@@ -115,7 +116,6 @@ async def dispatch_revoke_rating_to_chain(
         rating_entry_id = uri_to_identifier(rating_entry["entry"]["reference_id"])
 
         # Create the transaction to revoke the rating
-        
 
         tx = api.compose_call(
             call_module="NetworkScore",
@@ -125,14 +125,15 @@ async def dispatch_revoke_rating_to_chain(
                 "message_id": rating_entry["message_id"],
                 "digest": rating_entry["entry_digest"],
                 "authorization": authorization_id,
-            })
+            },
+        )
 
         # Authorize and sign the transaction
         extrinsic = await Did.authorize_tx(
             rating_entry["author_uri"],
             tx,
             sign_callback,
-            author_account.ss58_address,  
+            author_account.ss58_address,
         )
 
         extrinsic = api.create_signed_extrinsic(extrinsic, author_account)
@@ -147,3 +148,61 @@ async def dispatch_revoke_rating_to_chain(
         raise Errors.CordDispatchError(
             f'Error dispatching to chain: "{error_message}".'
         )
+
+
+async def dispatch_revise_rating_to_chain(
+    rating_entry, author_account, authorization_uri, sign_callback
+):
+    """
+    Dispatches a request to revise an existing rating entry on the blockchain.
+
+    This asynchronous function handles the process of revising a rating entry that is already stored on the blockchain.
+    It first checks whether the specified rating entry exists on the blockchain. If it does, the function simply returns
+    the existing entry's URI. If the rating entry is not stored, it proceeds to dispatch a revised version of the rating
+    to the blockchain. This involves creating and signing a transaction for the revised rating, and then submitting this
+    transaction to the blockchain.
+
+    :param rating_entry: The revised rating entry object to be dispatched, including the entry's details and its unique URI.
+    :param author_account: The blockchain account of the author, used for signing the transaction.
+    :param authorization_uri: The URI that provides authorization context for the rating revision dispatch.
+    :param sign_callback: A callback function for signing the extrinsic (blockchain transaction).
+
+    :return: The URI of the revised rating entry. If the entry was already on the chain, it returns the existing URI.
+    :raises CordDispatchError: If there's an error during the dispatch process, such as issues with signing, transaction creation, or submission.
+    """
+
+    try:
+        api = ConfigService.get("api")
+        authorization_id = uri_to_identifier(authorization_uri)
+        ref_entry_id = uri_to_identifier(rating_entry["entry"]["reference_id"])
+
+        exists = await is_rating_stored(rating_entry["entry_uri"])
+        if exists:
+            return rating_entry["entry_uri"]
+
+        tx = api.compose_call(
+            call_module="NetworkScore",
+            call_function="revise_rating",
+            call_params={
+                "entry": rating_entry["entry"],
+                "digest": rating_entry["entry_digest"],
+                "message_id": rating_entry["message_id"],
+                "debit_ref_id": ref_entry_id,
+                "authorization": authorization_id,
+            },
+        )
+
+        extrinsic = await Did.authorize_tx(
+            rating_entry["author_uri"], tx, sign_callback, author_account.ss58_address
+        )
+
+        extrinsic = api.create_signed_extrinsic(extrinsic, author_account)
+        api.submit_extrinsic(extrinsic, wait_for_inclusion=True)
+
+        return rating_entry["entry_uri"]
+
+    except Exception as error:
+        error_message = (
+            str(error) if isinstance(error, Exception) else json.dumps(error)
+        )
+        raise CordDispatchError(f'Error dispatching to chain: "{error_message}".')
