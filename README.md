@@ -35,13 +35,6 @@ Before you begin, ensure that you have the following:
      ```
 
 
-## Required Dependencies
-- substrate-interface
-- base58
-- mnemonic
-- pynacl
-
-
 ## Building the SDK
 
 To build the SDK and see changes, follow these steps:
@@ -59,6 +52,27 @@ To build the SDK and see changes, follow these steps:
      python3 setup.py install
      ```
      
+
+## Required Dependencies
+The following dependencies are automatically installed when you run the `setup.py` script. However, if you want to install them separately, you can use the following commands:
+
+- **substrate-interface**: A Python interface to interact with Substrate-based blockchains.
+  - Installation: `pip3 install substrate-interface`
+  - [Installation Guide](https://polkascan.github.io/py-substrate-interface/getting-started/installation/)
+
+- **base58**: A Python library for Base58 encoding and decoding.
+  - Installation: `pip3 install base58`
+  - [Installation Guide](https://pypi.org/project/base58/)
+
+- **mnemonic**: A Python implementation of the BIP39 mnemonic code for generating deterministic keys.
+  - Installation: `pip3 install mnemonic`
+  - [Installation Guide](https://pypi.org/project/mnemonic/)
+
+- **pynacl**: A Python binding to the Networking and Cryptography (NaCl) library.
+  - Installation: `pip3 install pynacl`
+  - [Installation Guide](https://pypi.org/project/PyNaCl/)
+
+
 ## Experimenting with SDK Methods
 
 After building the SDK, you can experiment with the provided methods.
