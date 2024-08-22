@@ -298,5 +298,35 @@ async def main():
 
     logger.info(f"✅ Statement element registered - {updated_statement}")
 
+    logger.info("❄️  Statement verification ")
+    verification_result = await Cord.Statement.statement.verify_against_properties(
+        statement_entry['element_uri'],
+        cred_hash,
+        issuer_did['uri'],
+        space["uri"],
+        schema_uri
+    ) 
+
+    if(verification_result['is_valid']):
+        logger.info(f"✅ Verification successful! {statement_entry['element_uri']} 🎉")
+    else:
+        logger.info(f"🚫 Verification failed! - {verification_result['message']} 🚫")
+
+    another_verification_result = await Cord.Statement.statement.verify_against_properties(
+        updated_statement_entry['element_uri'],
+        up_cred_hash,
+        delegate_two_did['uri'],
+        space["uri"],
+        schema_uri
+    )
+
+    if(another_verification_result['is_valid']):
+        logger.info(f"✅ Verification successful! {updated_statement_entry['element_uri']} 🎉")
+    else:
+        logger.info(f"🚫 Verification failed! - {another_verification_result['message']} 🚫")
+
+    
+
+    
 if __name__ == "__main__":
     asyncio.run(main())

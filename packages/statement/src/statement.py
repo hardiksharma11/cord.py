@@ -1,4 +1,4 @@
-from .statement_chain import get_uri_for_statement
+from .statement_chain import get_uri_for_statement,fetch_statement_details_from_chain
 from packages.utils.src.SDKErrors import Errors
 from packages.identifier.src.identifier import (
     check_identifier,
@@ -96,3 +96,84 @@ def build_from_update_properties(stmt_uri, digest, space_uri, creator_uri):
     verify_data_structure(statement)
 
     return statement
+
+async def verify_against_properties(stmt_uri, digest, creator=None, space_uri=None, schema_uri=None):
+    """
+    Verifies a statement's properties against provided parameters.
+
+    This asynchronous function checks if the provided statement URI, digest, and other optional properties
+    match the corresponding entry in the blockchain. It's used to validate the integrity and accuracy of
+    statement entries.
+
+    Args:
+        stmt_uri (str): The URI of the statement to be verified.
+        digest (str): The hexadecimal string representing the digest of the statement.
+        creator (str, optional): The DID URI of the statement's creator for verification.
+        space_uri (str, optional): The URI of the ChainSpace associated with the statement for verification.
+        schema_uri (str, optional): The URI of the schema linked to the statement for verification.
+
+    Returns:
+        dict: An object with `isValid` flag and `message`. The `isValid` flag indicates whether the verification
+        was successful, and the `message` provides details or error information.
+
+    Example:
+        stmt_uri = 'stmt:cord:example_uri'
+        digest = '0x123...'
+        creator_uri = 'did:cord:creator_uri'
+        space_uri = 'space:cord:example_uri'
+        schema_uri = 'schema:cord:schema_uri'
+        result = await verify_against_properties(stmt_uri, digest, creator_uri, space_uri, schema_uri)
+        print('Verification result:', result)
+    """
+    try:
+        statement_status = await fetch_statement_details_from_chain(stmt_uri)
+
+        if not statement_status:
+            return {
+                'is_valid': False,
+                'message': f'Statement details for "{digest}" not found.',
+            }
+
+        if digest != statement_status['digest']:
+            return {
+                'is_valid': False,
+                'message': 'Digest does not match with Statement Digest.',
+            }
+
+        if statement_status.get('revoked'):
+            return {
+                'is_valid': False,
+                'message': f'Statement "{stmt_uri}" Revoked.',
+            }
+
+        if creator:
+            if creator != statement_status['creator_uri']:
+                return {
+                    'is_valid': False,
+                    'message': 'Statement and Digest creator does not match.',
+                }
+
+        if space_uri:
+            if space_uri != statement_status['space_uri']:
+                return {
+                    'is_valid': False,
+                    'message': 'Statement and Digest space details does not match.',
+                }
+
+        if schema_uri:
+            if schema_uri != statement_status['schema_uri']:
+                return {
+                    'is_valid': False,
+                    'message': 'Statement and Digest schema details does not match.',
+                }
+
+        return {
+            'is_valid': True,
+            'message': 'Digest properties provided are valid and match the statement details.',
+        }
+
+    except Exception as error:
+        return {
+            'is_valid': False,
+            'message': f'Error verifying properties: {error}',
+        }

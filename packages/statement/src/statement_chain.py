@@ -2,7 +2,8 @@ from packages.sdk.src import ConfigService, Did, Utils
 from packages.identifier.src.identifier import (
     uri_to_identifier,
     build_statement_uri,
-    uri_to_statement_id_and_digest
+    uri_to_statement_id_and_digest,
+    identifier_to_uri
 )
 from packages.utils.src.SDKErrors import Errors
 
@@ -270,3 +271,128 @@ async def dispatch_update_to_chain(
         return stmt_entry['element_uri']
     except Exception as error:
         raise Errors.CordDispatchError(f'Error dispatching to chain: "{error}".')
+
+
+def decode_statement_details_from_chain(encoded, identifier):
+    """
+    Decodes statement details from their blockchain-encoded format.
+
+    This function is utilized to transform blockchain-specific encoded data of a statement into a more accessible format,
+    conforming to the IStatementDetails interface. It decodes the statement's details, including its digest, space URI, and schema URI.
+
+    Args:
+        encoded (Option[PalletStatementStatementDetails]): The encoded data of the statement, retrieved directly from the blockchain.
+        identifier (str): The identifier of the statement, used to construct its URI.
+
+    Returns:
+        dict: An IStatementDetails object containing the decoded details of the statement.
+
+    Example:
+        encoded_data = # ... blockchain response ...
+        statement_identifier = 'example_identifier'
+        statement_details = decode_statement_details_from_chain(encoded_data, statement_identifier)
+        print('Decoded Statement Details:', statement_details)
+    """
+    chain_statement = encoded.value
+    schema_details = (chain_statement['schema']) or None
+
+    schema_uri = identifier_to_uri(schema_details) if schema_details is not None else None
+
+    statement = {
+        'uri': identifier_to_uri(identifier),
+        'digest': chain_statement['digest'],
+        'space_uri': identifier_to_uri(chain_statement['space']),
+        'schema_uri': schema_uri
+    }
+    return statement
+
+async def get_details_from_chain(identifier):
+    """
+    Retrieves detailed state information of a statement from the CORD blockchain.
+
+    This internal function fetches and decodes the details of a statement, identified by its unique identifier, from the blockchain.
+    It returns the detailed information of the statement, including its digest, space URI, and schema URI.
+
+    Args:
+        identifier (str): The unique identifier of the statement whose details are being fetched.
+
+    Returns:
+        dict | None: An IStatementDetails object containing detailed information about the statement,
+        or None if the statement is not found.
+
+    Raises:
+        StatementError: Thrown when no statement with the provided identifier is found on the blockchain.
+
+    Example:
+        statement_id = 'example_identifier'
+        statement_details = await get_details_from_chain(statement_id)
+        print('Statement Details:', statement_details)
+    """
+    api = ConfigService.get('api')
+    statement_id = uri_to_identifier(identifier)
+
+    statement_entry = api.query("Statement", "Statements", [statement_id])
+    decoded_details = decode_statement_details_from_chain(statement_entry, identifier)
+    if decoded_details is None:
+        raise Errors.StatementError(f'There is no statement with the provided ID "{statement_id}" present on the chain.')
+
+    return decoded_details
+
+
+async def fetch_statement_details_from_chain(stmt_uri):
+    """
+    Fetches the state of a statement element from the CORD blockchain.
+
+    This function queries the blockchain to retrieve the current state of a statement,
+    identified by its URI. It returns comprehensive details about the statement, including its
+    digest, space URI, creator URI, schema URI (if applicable), and revocation status.
+
+    Args:
+        stmt_uri (str): The URI of the statement whose status is being fetched.
+
+    Returns:
+        dict | None: An IStatementStatus object containing the statement's details,
+        or None if the statement is not found.
+
+    Raises:
+        StatementError: Thrown when the statement or its entry is not found on the blockchain.
+
+    Example:
+        statement_uri = 'stmt:cord:example_uri'
+        statement_status = await fetch_statement_details_from_chain(statement_uri)
+        print('Statement Status:', statement_status)
+    """
+    api = ConfigService.get('api')
+    res = uri_to_statement_id_and_digest(stmt_uri)
+    identifier = res['identifier']
+    digest = res['digest']
+    statement_details = await get_details_from_chain(identifier)
+    if statement_details is None:
+        raise Errors.StatementError(f'There is no statement with the provided ID "{identifier}" present on the chain.')
+
+    schema_uri = identifier_to_uri(statement_details['schema_uri']) if statement_details['schema_uri'] is not None else None
+    space_uri = identifier_to_uri(statement_details['space_uri'])
+
+    element_status_details = api.query("Statement", "Entries", [identifier, digest])
+
+    if element_status_details is None:
+        raise Errors.StatementError(f'There is no entry with the provided ID "{identifier}" and digest "{digest}" present on the chain.')
+
+    element_chain_creator = element_status_details.value
+    element_creator = Did.from_chain(element_chain_creator)
+    element_status = api.query("Statement", "RevocationList", [identifier, digest])
+    revoked = False
+    if element_status.value is not None:
+        encoded_status = element_status.value
+        revoked = encoded_status['revoked']
+
+    statement_status = {
+        'uri': statement_details['uri'],
+        'digest': digest,
+        'space_uri': space_uri,
+        'creator_uri': element_creator,
+        'schema_uri': schema_uri,
+        'revoked': revoked,
+    }
+
+    return statement_status
