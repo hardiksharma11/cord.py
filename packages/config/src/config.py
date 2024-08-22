@@ -83,7 +83,7 @@ async def connect(blockchain_rpc_ws_url, no_init_warn=True, **api_options):
         logger.info(f"Error connecting to blockchain: {e}")
         raise e
 
-async def disconnect():
+def disconnect():
     """
     Disconnects from the CORD blockchain and clears the cached connection.
 

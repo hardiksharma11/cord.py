@@ -354,5 +354,34 @@ async def main():
         logger.info(f"🚫 Verification failed! - {re_verification_result['message']} 🚫")
 
 
+    logger.info(f"❄️  Restore Statement - {updated_statement_entry['element_uri']}")
+    await Cord.Statement.statement_chain.dispatch_restore_to_chain(
+        updated_statement_entry['element_uri'],
+        delegate_two_did['uri'],
+        author_identity,
+        delegate_auth,
+        lambda data: {
+            "signature": delegate_two_keys["authentication"].sign(data["data"]),
+            "key_type": delegate_two_keys["authentication"].crypto_type,
+        }
+    )
+
+    logger.info("✅ Statement restored!")
+
+    logger.info("❄️  Statement Re-verification ")
+    re_verification_result = await Cord.Statement.statement.verify_against_properties(
+        updated_statement_entry['element_uri'],
+        up_cred_hash,
+        delegate_two_did['uri'],
+        space["uri"]
+    )
+
+    if(re_verification_result['is_valid']):
+        logger.info(f"✅ Verification successful! {updated_statement_entry['element_uri']} 🎉")
+    else:
+        logger.info(f"🚫 Verification failed! - {re_verification_result['message']} 🚫")
+
 if __name__ == "__main__":
     asyncio.run(main())
+    logger.info("Bye! 👋 👋 👋 ")
+    Cord.disconnect()
