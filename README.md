@@ -124,4 +124,5 @@ For example if you want to run tests for `did` module run:
 python3 tests/test_did.py
 ```
 
-The output of each demo script will demonstrate the functionality of the corresponding method. For a detailed structure of the demo scripts, refer to the source code.
+
+
