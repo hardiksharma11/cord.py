@@ -112,3 +112,16 @@ python3 -u "demo/src/asset-tx.py"
 ```
 
 The output of each demo script will demonstrate the functionality of the corresponding method. For a detailed structure of the demo scripts, refer to the source code.
+
+## Running Tests
+To run the tests for different modules, run:
+
+```bash
+python3 tests/test_<module_name>.py
+```
+For example if you want to run tests for `did` module run:
+```bash
+python3 tests/test_did.py
+```
+
+The output of each demo script will demonstrate the functionality of the corresponding method. For a detailed structure of the demo scripts, refer to the source code.
