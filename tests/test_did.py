@@ -106,6 +106,52 @@ class TestCordSDKFunctions(unittest.TestCase):
         call.call_function = {"name": "create"}
         self.assertIsNone(Cord.Did.get_key_relationship_for_method(call))
 
+    @patch('packages.sdk.src.Did.generate_mnemonic')
+    @patch('packages.sdk.src.Did.generate_keypairs')
+    @patch('packages.sdk.src.Did.get_store_tx')
+    @patch('packages.sdk.src.ConfigService.get')
+    def test_create_did(self, mock_config_service_get, mock_get_store_tx, mock_generate_keypairs, mock_generate_mnemonic):
+        # Mock the return values of the functions and methods
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+
+        mnemonic = "use stereo ostrich special broccoli hurdle share subway jewel truck almost noodle loud goat more enhance brisk hope attend girl city catch mistake differ"
+        mock_generate_mnemonic.return_value = mnemonic
+        mock_keypairs = {
+            "authentication": MagicMock(),
+            "key_agreement": MagicMock(),
+            "assertion_method": MagicMock(),
+            "capability_delegation": MagicMock()
+        }
+        mock_generate_keypairs.return_value = mock_keypairs
+        
+        mock_get_store_tx.return_value = "mocked_tx"
+
+        mock_api.create_signed_extrinsic = MagicMock()
+        mock_api.submit_extrinsic = MagicMock()
+        mock_api.runtime_call = MagicMock(return_value="mocked_encoded_did")
+
+        with patch('packages.sdk.src.Did.get_did_uri_from_key', return_value="did:cord:3vRsRQmgpuuyzkfMYwnAMuT9LKwxZMedbBGmAicrXk7EhsEr") as mock_get_did_uri_from_key, \
+             patch('packages.sdk.src.Did.linked_info_from_chain', return_value={"document": "mocked_document"}) as mock_linked_info_from_chain:
+
+            submitter_account = MagicMock()
+            submitter_account.ss58_address = "mocked_address"
+
+            # Call the function
+            result = asyncio.run(Cord.Did.create_did(submitter_account))
+
+            # Assertions
+            mock_generate_mnemonic.assert_called_once_with(24)
+            mock_generate_keypairs.assert_called_once_with(mnemonic, "sr25519")
+            mock_get_store_tx.assert_called_once()
+            mock_api.create_signed_extrinsic.assert_called_once_with("mocked_tx", submitter_account)
+            mock_api.submit_extrinsic.assert_called_once()
+            mock_get_did_uri_from_key.assert_called_once()
+            mock_api.runtime_call.assert_called_once_with("DidApi", "query", ["3vRsRQmgpuuyzkfMYwnAMuT9LKwxZMedbBGmAicrXk7EhsEr"])
+            mock_linked_info_from_chain.assert_called_once_with("mocked_encoded_did")
+
+            self.assertEqual(result["mnemonic"], mnemonic)
+            self.assertEqual(result["document"], "mocked_document")
 
 if __name__ == "__main__":
     unittest.main()
