@@ -148,5 +148,130 @@ class TestChainspaceFunctions(unittest.TestCase):
             "signed_extrinsic", wait_for_inclusion=True
         )
 
+    @patch(f"{module_path}.ConfigService.get")
+    @patch(f"{module_path}.Did.authorize_tx")
+    def test_dispatch_subspace_create_to_chain(
+        self, mock_authorize_tx, mock_config_service_get
+    ):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+
+        chain_space = {
+            "digest": "mock_digest",
+            "uri": TEST_SPACE_URI,
+            "authorization_uri": TEST_AUTH_URI,
+        }
+        creator_uri = TEST_DID_URI
+        author_account = TEST_AUTHOR_ACCOUNT
+        count = 10
+        parent = TEST_SPACE_URI
+        sign_callback = TEST_SIGN_CALLBACK
+
+        # Mock api.compose_call to return a fake transaction
+        mock_api.compose_call.return_value = "fake_tx"
+
+        # Mock Did.authorize_tx to return a fake extrinsic
+        mock_authorize_tx.return_value = "authorized_extrinsic"
+
+        # Mock api.create_signed_extrinsic to return a signed extrinsic
+        mock_api.create_signed_extrinsic.return_value = "signed_extrinsic"
+
+        # Run the function
+        result = asyncio.run(
+            Cord.Chainspace_Chain.dispatch_subspace_create_to_chain(
+                chain_space, creator_uri, author_account, count, parent, sign_callback
+            )
+        )
+
+        # Assert
+        self.assertEqual(
+            result, {"uri": TEST_SPACE_URI, "authorization": TEST_AUTH_URI}
+        )
+
+        # Assert that compose_call was called with the correct parameters
+        mock_api.compose_call.assert_called_once_with(
+            call_module="ChainSpace",
+            call_function="subspace_create",
+            call_params={
+                "space_code": "mock_digest",
+                "count": count,
+                "space_id": TEST_SPACE_URI.replace("space:cord:", ""),
+            },
+        )
+
+        # Assert that authorize_tx was called with the correct parameters
+        mock_authorize_tx.assert_called_once_with(
+            creator_uri, "fake_tx", sign_callback, author_account.ss58_address
+        )
+
+        # Assert that create_signed_extrinsic was called with the correct parameters
+        mock_api.create_signed_extrinsic.assert_called_once_with(
+            "authorized_extrinsic", keypair=author_account
+        )
+
+        # Assert that submit_extrinsic was called with the correct parameters
+        mock_api.submit_extrinsic.assert_called_once_with(
+            "signed_extrinsic", wait_for_inclusion=True
+        )
+
+    @patch(f"{module_path}.ConfigService.get")
+    @patch(f"{module_path}.Did.authorize_tx")
+    def test_dispatch_update_tx_capacity_to_chain(
+        self, mock_authorize_tx, mock_config_service_get
+    ):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+
+        space = TEST_SPACE_URI
+        creator_uri = TEST_DID_URI
+        author_account = TEST_AUTHOR_ACCOUNT
+        author_account.ss58_address = "mock_ss58_address"
+        new_capacity = 200
+        sign_callback = TEST_SIGN_CALLBACK
+
+        # Mock api.compose_call to return a fake transaction
+        mock_api.compose_call.return_value = "fake_tx"
+
+        # Mock Did.authorize_tx to return a fake extrinsic
+        mock_authorize_tx.return_value = "authorized_extrinsic"
+
+        # Mock api.create_signed_extrinsic to return a signed extrinsic
+        mock_api.create_signed_extrinsic.return_value = "signed_extrinsic"
+
+        # Run the function
+        result = asyncio.run(
+            Cord.Chainspace_Chain.dispatch_update_tx_capacity_to_chain(
+                space, creator_uri, author_account, new_capacity, sign_callback
+            )
+        )
+
+        # Assert
+        self.assertEqual(result, {"uri": space})
+
+        # Verify that compose_call was called correctly
+        mock_api.compose_call.assert_called_once_with(
+            call_module="ChainSpace",
+            call_function="update_transaction_capacity_sub",
+            call_params={
+                "space_id": space.replace("space:cord:", ""),
+                "new_txn_capacity": new_capacity,
+            },
+        )
+
+        # Verify that authorize_tx was called with the correct parameters
+        mock_authorize_tx.assert_called_once_with(
+            creator_uri, "fake_tx", sign_callback, "mock_ss58_address"
+        )
+
+        # Verify that create_signed_extrinsic was called correctly
+        mock_api.create_signed_extrinsic.assert_called_once_with(
+            "authorized_extrinsic", keypair=author_account
+        )
+
+        # Verify that submit_extrinsic was called correctly
+        mock_api.submit_extrinsic.assert_called_once_with(
+            "signed_extrinsic", wait_for_inclusion=True
+        )
+
 if __name__ == "__main__":
     unittest.main()
