@@ -361,6 +361,87 @@ class TestChainspaceFunctions(unittest.TestCase):
                 )
             )
 
+    @patch(f"{module_path}.ConfigService.get")
+    @patch(f"{module_path}.Did.authorize_tx")
+    @patch(f"{module_path}.dispatch_delegate_authorization_tx")
+    def test_dispatch_delegate_authorization(
+        self,
+        mock_dispatch_delegate_authorization_tx,
+        mock_authorize_tx,
+        mock_config_service_get,
+    ):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+        mock_dispatch_delegate_authorization_tx.return_value = "mock_tx"
+        mock_authorize_tx.return_value = "authorized_tx"
+        mock_api.create_signed_extrinsic.return_value = "signed_extrinsic"
+
+        request = {
+            "uri": TEST_SPACE_URI,
+            "delegate_uri": TEST_DID_URI,
+            "delegator_uri": TEST_DID_URI,
+            "permission": "ADMIN",
+            "authorization_uri": TEST_AUTH_URI,
+        }
+        authorization_uri = TEST_AUTH_URI
+        author_account = MagicMock()
+        sign_callback = MagicMock()
+
+        result = asyncio.run(
+            Cord.Chainspace_Chain.dispatch_delegate_authorization(
+                request, author_account, authorization_uri, sign_callback
+            )
+        )
+
+        self.assertEqual(result, request["authorization_uri"])
+        mock_dispatch_delegate_authorization_tx.assert_called_once_with(
+            request["permission"],
+            "c348nKoDfByj4Eqo138ru8oT6nmY2BKPnGZqwpKGTyfgFRpFA",
+            "3vRsRQmgpuuyzkfMYwnAMuT9LKwxZMedbBGmAicrXk7EhsEr",
+            "a3dm8W5ZM5mSJJRoWows6CCTEu5EvgB4WhmzaDZos54z3J2wK",
+        )
+        mock_authorize_tx.assert_called_once_with(
+            request["delegator_uri"],
+            "mock_tx",
+            sign_callback,
+            author_account.ss58_address,
+        )
+        mock_api.create_signed_extrinsic.assert_called_once_with(
+            "authorized_tx", keypair=author_account
+        )
+        mock_api.submit_extrinsic.assert_called_once_with(
+            "signed_extrinsic", wait_for_inclusion=True
+        )
+
+    @patch(f"{module_path}.Did.from_chain", return_value="mock_creator_chain")
+    def test_decode_space_details_from_chain(self, mock_did_from_chain):
+        encoded = MagicMock()
+        encoded.value = {
+            "creator": TEST_DID_URI,
+            "txn_capacity": 100,
+            "txn_count": 10,
+            "approved": True,
+            "archive": False,
+        }
+        space_uri = TEST_SPACE_URI
+
+        result = Cord.Chainspace_Chain.decode_space_details_from_chain(
+            encoded, space_uri
+        )
+
+        self.assertEqual(
+            result,
+            {
+                "uri": space_uri,
+                "creator_uri": mock_did_from_chain.return_value,
+                "txn_capacity": 100,
+                "txn_usage": 10,
+                "approved": True,
+                "archive": False,
+            },
+        )
+        Cord.Did.from_chain.assert_called_once_with(TEST_DID_URI)
+
 
 if __name__ == "__main__":
     unittest.main()
