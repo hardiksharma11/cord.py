@@ -273,5 +273,94 @@ class TestChainspaceFunctions(unittest.TestCase):
             "signed_extrinsic", wait_for_inclusion=True
         )
 
+    @patch(f"{module_path}.ConfigService.get")
+    @patch(f"{module_path}.blake2_as_hex")
+    @patch(f"{module_path}.hash_to_uri")
+    @patch(f"{module_path}.Did.to_chain")
+    @patch(f"{module_path}.uri_to_identifier")
+    def test_get_uri_for_authorization(
+        self,
+        mock_uri_to_identifier,
+        mock_to_chain,
+        mock_hash_to_uri,
+        mock_blake2_as_hex,
+        mock_config_service_get,
+    ):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+        mock_api.encode_scale.return_value.get_remaining_bytes.return_value = (
+            b"some_bytes"
+        )
+        mock_blake2_as_hex.return_value = "mock_auth_digest"
+        mock_hash_to_uri.return_value = "mock_auth_uri"
+        mock_to_chain.return_value = "mock_chain_address"
+        mock_uri_to_identifier.return_value = "mock_identifier"
+
+        space_uri = TEST_SPACE_URI
+        delegate_uri = TEST_DID_URI
+        creator_uri = TEST_DID_URI
+
+        result = asyncio.run(
+            Cord.Chainspace_Chain.get_uri_for_authorization(
+                space_uri, delegate_uri, creator_uri
+            )
+        )
+
+        self.assertEqual(result, "mock_auth_uri")
+        mock_blake2_as_hex.assert_called()
+        mock_hash_to_uri.assert_called()
+        mock_config_service_get.assert_called_with("api")
+        mock_to_chain.assert_called_with(delegate_uri)
+        mock_uri_to_identifier.assert_called_with(space_uri)
+
+    @patch(f"{module_path}.ConfigService.get")
+    def test_dispatch_delegate_authorization_tx(self, mock_config_service_get):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+
+        # Test cases for each permission type
+        test_cases = [
+            (Permission.ASSERT, "add_delegate"),
+            (Permission.DELEGATE, "add_delegator"),
+            (Permission.ADMIN, "add_admin_delegate"),
+        ]
+
+        space_id = "mock_space_id"
+        delegate_id = "mock_delegate_id"
+        auth_id = "mock_auth_id"
+
+        for permission, expected_function in test_cases:
+            with self.subTest(permission=permission):
+                tx = asyncio.run(
+                    Cord.Chainspace_Chain.dispatch_delegate_authorization_tx(
+                        permission, space_id, delegate_id, auth_id
+                    )
+                )
+                mock_api.compose_call.assert_called_with(
+                    call_module="ChainSpace",
+                    call_function=expected_function,
+                    call_params={
+                        "space_id": space_id,
+                        "delegate": delegate_id,
+                        "authorization": auth_id,
+                    },
+                )
+                self.assertEqual(tx, mock_api.compose_call.return_value)
+
+    @patch(f"{module_path}.ConfigService.get")
+    def test_dispatch_delegate_authorization_tx_invalid_permission(
+        self, mock_config_service_get
+    ):
+        with self.assertRaises(Errors.CordDispatchError):
+            asyncio.run(
+                Cord.Chainspace_Chain.dispatch_delegate_authorization_tx(
+                    "INVALID_PERMISSION",
+                    "mock_space_id",
+                    "mock_delegate_id",
+                    "mock_auth_id",
+                )
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
