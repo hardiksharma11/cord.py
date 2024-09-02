@@ -442,6 +442,111 @@ class TestChainspaceFunctions(unittest.TestCase):
         )
         Cord.Did.from_chain.assert_called_once_with(TEST_DID_URI)
 
+    @patch(f"{module_path}.ConfigService.get")
+    @patch(f"{module_path}.decode_space_details_from_chain")
+    def test_fetch_from_chain(
+        self, mock_decode_space_details_from_chain, mock_config_service_get
+    ):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+
+        space_uri = TEST_SPACE_URI
+        mock_api.query.return_value = "encoded_space_details"
+
+        mock_decode_space_details_from_chain.return_value = {
+            "uri": space_uri,
+            "creator_uri": "did:cord:mock_creator",
+            "txn_capacity": 100,
+            "txn_usage": 10,
+            "approved": True,
+            "archive": False,
+        }
+
+        result = asyncio.run(Cord.Chainspace_Chain.fetch_from_chain(space_uri))
+
+        self.assertEqual(result, mock_decode_space_details_from_chain.return_value)
+        mock_api.query.assert_called_once_with(
+            "ChainSpace",
+            "Spaces",
+            ["c348nKoDfByj4Eqo138ru8oT6nmY2BKPnGZqwpKGTyfgFRpFA"],
+        )
+        mock_decode_space_details_from_chain.assert_called_once_with(
+            "encoded_space_details", space_uri
+        )
+
+    @patch(f"{module_path}.Did.from_chain", return_value="mock_delegate_chain")
+    @patch(f"{module_path}.identifier_to_uri", return_value="mock_space_id_uri")
+    def test_decode_authorization_details_from_chain(
+        self, mock_identifier_to_uri, mock_from_chain
+    ):
+        encoded = MagicMock()
+        encoded.value = {
+            "space_id": "mock_space_id_chain",
+            "delegate": "mock_delegate_chain",
+            "permissions": {"bits": Permission.ASSERT},
+            "delegator": "mock_delegator_chain",
+        }
+        authorization_uri = "auth:cord:mock_auth"
+
+        # Set the return values for the patched functions
+        mock_identifier_to_uri.return_value = "space:cord:mock_space"
+        mock_from_chain.side_effect = [
+            "did:cord:mock_delegate",
+            "did:cord:mock_delegator",
+        ]
+
+        result = Cord.Chainspace_Chain.decode_authorization_details_from_chain(
+            encoded, authorization_uri
+        )
+
+        self.assertEqual(
+            result,
+            {
+                "uri": "space:cord:mock_space",
+                "delegate_uri": "did:cord:mock_delegate",
+                "permission": Permission.ASSERT,
+                "authorization_uri": authorization_uri,
+                "delegator_uri": "did:cord:mock_delegator",
+            },
+        )
+        mock_from_chain.assert_any_call("mock_delegate_chain")
+        mock_from_chain.assert_any_call("mock_delegator_chain")
+        mock_identifier_to_uri.assert_called_once_with("mock_space_id_chain")
+
+    @patch(f"{module_path}.ConfigService.get")
+    @patch(f"{module_path}.decode_authorization_details_from_chain")
+    def test_fetch_authorization_from_chain(
+        self, mock_decode_authorization_details_from_chain, mock_config_service_get
+    ):
+        mock_api = MagicMock()
+        mock_config_service_get.return_value = mock_api
+
+        authorization_uri = TEST_AUTH_URI
+        mock_api.query.return_value = "encoded_auth_details"
+
+        mock_decode_authorization_details_from_chain.return_value = {
+            "uri": "space:cord:mock_space",
+            "delegate_uri": "did:cord:mock_delegate",
+            "permission": Permission.ASSERT,
+            "authorization_uri": authorization_uri,
+            "delegator_uri": "did:cord:mock_delegator",
+        }
+
+        result = asyncio.run(
+            Cord.Chainspace_Chain.fetch_authorization_from_chain(authorization_uri)
+        )
+
+        self.assertEqual(
+            result, mock_decode_authorization_details_from_chain.return_value
+        )
+        mock_api.query.assert_called_once_with(
+            "ChainSpace",
+            "Authorizations",
+            ["a3dm8W5ZM5mSJJRoWows6CCTEu5EvgB4WhmzaDZos54z3J2wK"],
+        )
+        mock_decode_authorization_details_from_chain.assert_called_once_with(
+            "encoded_auth_details", authorization_uri
+        )
 
 if __name__ == "__main__":
     unittest.main()
