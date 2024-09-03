@@ -70,6 +70,42 @@ class TestCordSDKFunctions(unittest.TestCase):
         expected_result = {"Ed25519": "0xdeadbeef"}
         self.assertEqual(Cord.Did.public_key_to_chain_for_keypair(keypair), expected_result)
 
+    def test_increase_nonce(self):
+        MAX_NONCE_VALUE = int(pow(2, 64) - 1)
+        self.assertEqual(Cord.Did.increase_nonce(5), 6)
+        self.assertEqual(Cord.Did.increase_nonce(MAX_NONCE_VALUE), 1)
+
+    @patch("packages.sdk.src.ConfigService.get")
+    def test_get_next_nonce(self, mock_get):
+        mock_get.return_value.query.return_value.value = {"last_tx_counter": "5"}
+        did = "did:cord:3vRsRQmgpuuyzkfMYwnAMuT9LKwxZMedbBGmAicrXk7EhsEr"
+        result = Cord.Did.get_next_nonce(did)
+        self.assertEqual(result, 6)
+
+    @patch("packages.did.src.Did_chain.get_key_relationship_for_method", return_value="authentication")
+    @patch("packages.did.src.Did_chain.generate_did_authenticated_tx", return_value="mocked_tx")
+    @patch("packages.did.src.Did_chain.get_next_nonce", return_value=1)
+    def test_authorize_tx(self, mock_relationship, mock_tx, mock_nonce):
+        did = "did:cord:12345"
+        extrinsic = MagicMock()
+        sign = MagicMock()
+        submitter_account = MagicMock()
+
+        result = asyncio.run(Cord.Did.authorize_tx(did, extrinsic, sign, submitter_account))
+        self.assertEqual(result, "mocked_tx")
+
+    def test_get_key_relationship_for_tx(self):
+        extrinsic = MagicMock()
+        extrinsic.method = MagicMock()
+        with patch("packages.sdk.src.Did.get_key_relationship_for_method", return_value="authentication"):
+            self.assertEqual(Cord.Did.get_key_relationship_for_tx(extrinsic), "authentication")
+
+    def test_get_key_relationship_for_method(self):
+        call = MagicMock()
+        call.call_module = {"name": "Did"}
+        call.call_function = {"name": "create"}
+        self.assertIsNone(Cord.Did.get_key_relationship_for_method(call))
+
 
 if __name__ == "__main__":
     unittest.main()
