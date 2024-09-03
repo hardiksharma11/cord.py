@@ -9,4 +9,5 @@ import packages.statement.src as Statement
 import packages.asset.src as Asset
 import packages.network_score.src as Score
 import packages.identifier.src as Identifier
+from packages.chainspace.src import chainspace_chain as Chainspace_Chain
 
