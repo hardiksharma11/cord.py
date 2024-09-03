@@ -284,6 +284,6 @@ class TestCordSDKFunctions(unittest.TestCase):
         # Check the result
         self.assertEqual(result, "composed_extrinsic")
 
-
 if __name__ == "__main__":
     unittest.main()
+    
